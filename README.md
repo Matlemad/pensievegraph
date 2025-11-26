@@ -1,169 +1,172 @@
-# Pensieve 3D Map
+# **Pensieve 3D Map**
 
-Visualizzazione 3D interattiva delle relazioni Pensieve utilizzando un grafo force-directed.
+Interactive 3D visualization of Pensieve relationships using a force-directed graph.
 
-## Caratteristiche
+## **Features**
 
-- **Vista Affiliations**: Visualizza relazioni `built_on`, `library`, `affiliated`, `contributor`
-- **Vista Funding**: Visualizza grant con direzione e importi
-- **Filtri**: Tags (lens), Min CP, ricerca
-- **Interattività**: Orbit controls, zoom, hover tooltips, click per dettagli
-- **URL State**: Deep linking con parametri nella URL
-- **Performance**: Ottimizzato per ~400-600 link
+* **Affiliations View**: Shows `built_on`, `library`, `affiliated`, `contributor` relationships
+* **Funding View**: Shows grants with direction and amounts
+* **Filters**: Tags (lens), Min CP, search
+* **Interactivity**: Orbit controls, zoom, hover tooltips, click for details
+* **URL State**: Deep linking through URL parameters
+* **Performance**: Optimized for ~400–600 links
 
-## Stack Tecnologico
+## **Technology Stack**
 
-- **Next.js 14** (App Router, TypeScript)
-- **react-force-graph-3d** (Three.js)
-- **TailwindCSS** per lo styling
-- **pnpm** per la gestione delle dipendenze
+* **Next.js 14** (App Router, TypeScript)
+* **react-force-graph-3d** (Three.js)
+* **TailwindCSS** for styling
+* **pnpm** for dependency management
 
-## Installazione
+## **Installation**
 
 ```bash
-# Installa le dipendenze
+# Install dependencies
 pnpm install
 
-# Copia il file .env.example e configura
+# Copy the .env.example file and configure it
 cp .env.example .env.local
 
-# Avvia il server di sviluppo
+# Start the development server
 pnpm dev
 ```
 
-Apri [http://localhost:3000](http://localhost:3000) nel browser.
+Open [http://localhost:3000](http://localhost:3000) in the browser.
 
-## Configurazione
+## **Configuration**
 
-Crea un file `.env.local` con:
+Create a `.env.local` file with:
 
+* `USE_MOCK=true`: Use mock data from `public/mock.json`. Set to `false` to use the real API.
+* `PENSIEVE_API_BASE`: Full URL of the Pensieve API endpoint (`https://pensieve.ecf.network/api/project-relations`)
+* `PENSIEVE_API_KEY` or `API_KEY`: Pensieve API key (header `X-API-Key`)
+* `CACHE_TTL_SECONDS`: In-memory cache duration (default: 300)
 
-- `USE_MOCK=true`: Usa i dati mock da `public/mock.json`. Imposta a `false` per usare l'API reale.
-- `PENSIEVE_API_BASE`: URL completo dell'endpoint API Pensieve (`https://pensieve.ecf.network/api/project-relations`)
-- `PENSIEVE_API_KEY` o `API_KEY`: Chiave API Pensieve (header `X-API-Key`)
-- `CACHE_TTL_SECONDS`: Durata della cache in memoria (default: 300)
+### **Pensieve API**
 
-### API Pensieve
+The application integrates with Pensieve’s `/api/project-relations` endpoint:
 
-L'applicazione si integra con l'endpoint `/api/project-relations` di Pensieve:
+* **Endpoint**: `GET /api/project-relations`
+* **Authentication**: Header `X-API-Key: <token>`
+* **Rate Limit**: 500 requests per IP per 60 seconds
+* **Query Parameters**:
 
-- **Endpoint**: `GET /api/project-relations`
-- **Autenticazione**: Header `X-API-Key: <token>`
-- **Rate Limit**: 500 richieste per IP per 60 secondi
-- **Query Parameters**:
-  - `projectId`: ID progetto specifico (opzionale)
-  - `limit`: 1-300, default 20 (per paginazione)
-  - `offset`: ≥ 0, default 0 (per paginazione)
+  * `projectId`: Specific project ID (optional)
+  * `limit`: 1–300, default 20 (pagination)
+  * `offset`: ≥ 0, default 0 (pagination)
 
-L'applicazione recupera automaticamente i progetti con paginazione per costruire il grafo completo.
+The application automatically fetches paginated projects to construct the full graph.
 
-## Struttura del Progetto
+## **Project Structure**
 
 ```
 pensieve-3d-map/
 ├── app/
 │   ├── api/
 │   │   └── graph/
-│   │       └── route.ts          # API route per il grafo
+│   │       └── route.ts          # API route for the graph
 │   ├── map/
-│   │   └── page.tsx               # Pagina principale
+│   │   └── page.tsx              # Main page
 │   ├── layout.tsx
-│   ├── page.tsx                   # Redirect a /map
+│   ├── page.tsx                  # Redirect to /map
 │   └── globals.css
 ├── components/
-│   ├── Graph3D.tsx                # Componente grafo 3D
-│   ├── Controls.tsx               # Controlli (mode, filters, search)
-│   ├── Sidebar.tsx                # Sidebar con dettagli nodo
-│   └── Legend.tsx                 # Legenda
+│   ├── Graph3D.tsx               # 3D graph component
+│   ├── Controls.tsx              # Controls (mode, filters, search)
+│   ├── Sidebar.tsx               # Sidebar with node details
+│   └── Legend.tsx                # Legend
 ├── lib/
-│   ├── api.ts                     # Helper per fetch API
-│   ├── normalize.ts               # Normalizzazione Pensieve → Graph3D
-│   ├── pensieve.ts                # Fetch dati Pensieve (API o mock)
-│   └── types.ts                   # TypeScript types
+│   ├── api.ts                    # API fetch helpers
+│   ├── normalize.ts              # Pensieve → Graph3D normalization
+│   ├── pensieve.ts               # Pensieve data fetcher (API or mock)
+│   └── types.ts                  # TypeScript types
 ├── public/
-│   └── mock.json                  # Dati mock
+│   └── mock.json                 # Mock data
 └── package.json
 ```
 
-## API
+## **API**
 
-### GET `/api/graph`
+### **GET `/api/graph`**
 
-Restituisce il grafo normalizzato in formato `Graph3D`.
+Returns the normalized graph in `Graph3D` format.
 
 **Query Parameters:**
-- `mode`: `affiliations` | `funding` (default: `affiliations`)
-- `lens`: Tags separati da virgola (es: `public-goods,education`)
-- `minCP`: Filtro minimo CP (default: 0)
-- `limit`: Limite massimo link (default: 800)
 
-**Esempio:**
+* `mode`: `affiliations` | `funding` (default: `affiliations`)
+* `lens`: Comma-separated tags (e.g., `public-goods,education`)
+* `minCP`: Minimum CP filter (default: 0)
+* `limit`: Maximum number of links (default: 800)
+
+**Example:**
+
 ```
 GET /api/graph?mode=funding&minCP=100&lens=public-goods,education
 ```
 
-## URL State
+## **URL State**
 
-La pagina `/map` supporta parametri URL per deep linking:
+The `/map` page supports URL parameters for deep linking:
 
-- `mode`: `affiliations` | `funding`
-- `lens`: Tags separati da virgola
-- `minCP`: Numero minimo CP
-- `limit`: Limite link
-- `focus`: ID nodo da focalizzare
+* `mode`: `affiliations` | `funding`
+* `lens`: Comma-separated tags
+* `minCP`: Minimum CP value
+* `limit`: Link limit
+* `focus`: Node ID to focus on
 
-**Esempio:**
+**Example:**
+
 ```
 /map?mode=funding&minCP=100&lens=public-goods,education&focus=proj:arweave
 ```
 
-## Controlli
+## **Controls**
 
-- **Mode Toggle**: Alterna tra Affiliations e Funding
-- **Tags Lens**: Filtra per tags (OR logic, separati da virgola)
-- **Min CP Slider**: Filtra nodi per CP minimo (0-5000)
-- **Search**: Cerca e focalizza un nodo per nome
-- **Reset Camera**: Ripristina la vista del grafo
+* **Mode Toggle**: Switch between Affiliations and Funding
+* **Tags Lens**: Filter by tags (OR logic, comma-separated)
+* **Min CP Slider**: Filter nodes by minimum CP (0–5000)
+* **Search**: Search and focus a node by name
+* **Reset Camera**: Reset the graph view
 
-## Interazioni
+## **Interactions**
 
-- **Hover**: Mostra tooltip con label, kind, tags, CP
-- **Click**: Seleziona nodo e mostra dettagli nella sidebar
-- **Orbit**: Trascina per ruotare la vista
-- **Zoom**: Scroll per zoom in/out
+* **Hover**: Shows tooltip with label, kind, tags, CP
+* **Click**: Selects a node and shows details in the sidebar
+* **Orbit**: Drag to rotate the view
+* **Zoom**: Scroll to zoom in/out
 
-## Sidebar
+## **Sidebar**
 
-Quando un nodo è selezionato, la sidebar mostra:
+When a node is selected, the sidebar shows:
 
-- Informazioni base (nome, tipo, CP, tags, ecosystem)
-- Entità correlate (top 10 per peso nel modo corrente)
-- Azioni:
-  - Focus Node: Focalizza il nodo nella vista
-  - Isola Vicinato: Filtra per mostrare solo i vicini
-  - Copia Link Condivisione: Copia URL con stato corrente
+* Basic information (name, type, CP, tags, ecosystem)
+* Related entities (top 10 by weight in the current mode)
+* Actions:
 
-## Performance
+  * Focus Node: Centers the node in the view
+  * Isolate Neighborhood: Show only its neighbors
+  * Copy Share Link: Copy URL with current state
 
-- **Cooldown**: 100 ticks per stabilizzare il grafo
-- **Downsampling**: Se i link superano il limite, mantiene i top-K per nodo
-- **Cache**: Cache in-memory con TTL configurabile
+## **Performance**
 
-## Build per Produzione
+* **Cooldown**: 100 ticks to stabilize the graph
+* **Downsampling**: If links exceed the limit, keeps top-K per node
+* **Cache**: In-memory cache with configurable TTL
+
+## **Production Build**
 
 ```bash
 pnpm build
 pnpm start
 ```
 
-## Note
+## **Notes**
 
-- Il grafo usa colori automatici basati su `kind` (project/org/person)
-- I link di tipo `grant` hanno frecce direzionali
-- La dimensione dei nodi è proporzionale al CP
-- Lo spessore dei link è proporzionale al peso
+* Node colors are automatically based on `kind` (project/org/person)
+* `grant` links have directional arrows
+* Node size is proportional to CP
+* Link thickness is proportional to weight
 
-## Licenza
+## **License**
 
 MIT
-
