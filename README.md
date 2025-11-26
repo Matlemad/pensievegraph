@@ -37,13 +37,6 @@ Apri [http://localhost:3000](http://localhost:3000) nel browser.
 
 Crea un file `.env.local` con:
 
-```env
-USE_MOCK=false
-PENSIEVE_API_BASE=https://pensieve.ecf.network/api/project-relations
-PENSIEVE_API_KEY=pk_live_2fd2ed946f85aa50c177cd70b0e79b86
-API_KEY=pk_live_2fd2ed946f85aa50c177cd70b0e79b86
-CACHE_TTL_SECONDS=300
-```
 
 - `USE_MOCK=true`: Usa i dati mock da `public/mock.json`. Imposta a `false` per usare l'API reale.
 - `PENSIEVE_API_BASE`: URL completo dell'endpoint API Pensieve (`https://pensieve.ecf.network/api/project-relations`)
