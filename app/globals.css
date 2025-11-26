@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Node colors */
+  --node-project: #60a5fa;
+  --node-org: #f59e0b;
+  --node-person: #a78bfa;
+  --node-selected: #ef4444;
+  --node-focused: #10b981;
+
+  /* Edge colors */
+  --edge-aff: rgba(148, 163, 184, 0.6);
+  --edge-grant: rgba(59, 130, 246, 0.8);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Ensure the app fills the viewport on mobile */
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+

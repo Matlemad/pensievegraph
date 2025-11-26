@@ -1,0 +1,709 @@
+{
+  "projects": [
+    {
+      "id": "arweave",
+      "name": "Arweave",
+      "tags": ["Decentralised Storage", "Infrastructure"],
+      "category": "Storage & Data",
+      "ecosystem": "web3",
+      "cp_total": 2500
+    },
+    {
+      "id": "ethereum",
+      "name": "Ethereum",
+      "tags": ["Ethereum", "Layer 1", "Public goods"],
+      "category": "Infrastructure",
+      "ecosystem": "web3",
+      "cp_total": 5000
+    },
+    {
+      "id": "ipfs",
+      "name": "IPFS",
+      "tags": ["IPFS", "Decentralised Storage", "Public goods"],
+      "category": "Storage & Data",
+      "ecosystem": "web3",
+      "cp_total": 3200
+    },
+    {
+      "id": "gitcoin",
+      "name": "Gitcoin",
+      "tags": ["Funding", "Public goods", "Education"],
+      "category": "Funding",
+      "ecosystem": "web3",
+      "cp_total": 1800
+    },
+    {
+      "id": "ens",
+      "name": "ENS",
+      "tags": ["Ethereum", "DID", "Infrastructure"],
+      "category": "Infrastructure",
+      "ecosystem": "web3",
+      "cp_total": 1200
+    },
+    {
+      "id": "uniswap",
+      "name": "Uniswap",
+      "tags": ["DeFi", "Ethereum"],
+      "category": "Applications/dApps",
+      "ecosystem": "web3",
+      "cp_total": 4000
+    },
+    {
+      "id": "optimism",
+      "name": "Optimism",
+      "tags": ["Optimism", "Layer 2", "Public goods"],
+      "category": "Infrastructure",
+      "ecosystem": "web3",
+      "cp_total": 2800
+    },
+    {
+      "id": "polygon",
+      "name": "Polygon",
+      "tags": ["Layer 2", "Infrastructure"],
+      "category": "Infrastructure",
+      "ecosystem": "web3",
+      "cp_total": 3500
+    },
+    {
+      "id": "khan-academy",
+      "name": "Khan Academy",
+      "tags": ["Education", "Public goods"],
+      "category": "Education",
+      "ecosystem": "education",
+      "cp_total": 1500
+    },
+    {
+      "id": "wikipedia",
+      "name": "Wikipedia",
+      "tags": ["Education", "Public goods"],
+      "category": "Other",
+      "ecosystem": "education",
+      "cp_total": 4500
+    },
+    {
+      "id": "wikimedia",
+      "name": "Wikimedia Foundation",
+      "tags": ["Education", "Public goods"],
+      "category": "Other",
+      "ecosystem": "education",
+      "cp_total": 2000
+    },
+    {
+      "id": "mozilla",
+      "name": "Mozilla",
+      "tags": ["infra", "public-goods", "browser"],
+      "ecosystem": "web",
+      "cp_total": 3800
+    },
+    {
+      "id": "tor",
+      "name": "Tor Project",
+      "tags": ["infra", "privacy", "public-goods"],
+      "ecosystem": "web",
+      "cp_total": 900
+    },
+    {
+      "id": "signal",
+      "name": "Signal",
+      "tags": ["privacy", "communication", "public-goods"],
+      "ecosystem": "web",
+      "cp_total": 1100
+    },
+    {
+      "id": "matrix",
+      "name": "Matrix",
+      "tags": ["infra", "communication", "public-goods"],
+      "ecosystem": "web",
+      "cp_total": 800
+    },
+    {
+      "id": "ethereum-foundation",
+      "name": "Ethereum Foundation",
+      "tags": ["public-goods", "funding"],
+      "ecosystem": "web3",
+      "cp_total": 3000
+    },
+    {
+      "id": "protocol-labs",
+      "name": "Protocol Labs",
+      "tags": ["infra", "public-goods", "funding"],
+      "ecosystem": "web3",
+      "cp_total": 2200
+    },
+    {
+      "id": "filecoin",
+      "name": "Filecoin",
+      "tags": ["infra", "storage", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 2700
+    },
+    {
+      "id": "compound",
+      "name": "Compound",
+      "tags": ["defi", "infra"],
+      "ecosystem": "web3",
+      "cp_total": 1600
+    },
+    {
+      "id": "maker",
+      "name": "MakerDAO",
+      "tags": ["defi", "public-goods"],
+      "ecosystem": "web3",
+      "cp_total": 1900
+    },
+    {
+      "id": "aave",
+      "name": "Aave",
+      "tags": ["defi", "infra"],
+      "ecosystem": "web3",
+      "cp_total": 2100
+    },
+    {
+      "id": "the-graph",
+      "name": "The Graph",
+      "tags": ["infra", "indexing", "public-goods"],
+      "ecosystem": "web3",
+      "cp_total": 1400
+    },
+    {
+      "id": "chainlink",
+      "name": "Chainlink",
+      "tags": ["infra", "oracles", "public-goods"],
+      "ecosystem": "web3",
+      "cp_total": 3300
+    },
+    {
+      "id": "cosmos",
+      "name": "Cosmos",
+      "tags": ["infra", "blockchain", "interoperability"],
+      "ecosystem": "web3",
+      "cp_total": 2400
+    },
+    {
+      "id": "polkadot",
+      "name": "Polkadot",
+      "tags": ["infra", "blockchain", "interoperability"],
+      "ecosystem": "web3",
+      "cp_total": 2900
+    },
+    {
+      "id": "near",
+      "name": "NEAR",
+      "tags": ["infra", "blockchain", "scaling"],
+      "ecosystem": "web3",
+      "cp_total": 1700
+    },
+    {
+      "id": "solana",
+      "name": "Solana",
+      "tags": ["infra", "blockchain", "scaling"],
+      "ecosystem": "web3",
+      "cp_total": 3600
+    },
+    {
+      "id": "avalanche",
+      "name": "Avalanche",
+      "tags": ["infra", "blockchain", "scaling"],
+      "ecosystem": "web3",
+      "cp_total": 3100
+    },
+    {
+      "id": "arbitrum",
+      "name": "Arbitrum",
+      "tags": ["infra", "scaling", "public-goods"],
+      "ecosystem": "web3",
+      "cp_total": 2600
+    },
+    {
+      "id": "starknet",
+      "name": "Starknet",
+      "tags": ["infra", "scaling"],
+      "ecosystem": "web3",
+      "cp_total": 2300
+    },
+    {
+      "id": "zksync",
+      "name": "zkSync",
+      "tags": ["infra", "scaling"],
+      "ecosystem": "web3",
+      "cp_total": 2000
+    },
+    {
+      "id": "celo",
+      "name": "Celo",
+      "tags": ["infra", "blockchain", "public-goods"],
+      "ecosystem": "web3",
+      "cp_total": 1300
+    },
+    {
+      "id": "tezos",
+      "name": "Tezos",
+      "tags": ["infra", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 1000
+    },
+    {
+      "id": "cardano",
+      "name": "Cardano",
+      "tags": ["infra", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 3400
+    },
+    {
+      "id": "algorand",
+      "name": "Algorand",
+      "tags": ["infra", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 1500
+    },
+    {
+      "id": "hedera",
+      "name": "Hedera",
+      "tags": ["infra", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 1200
+    },
+    {
+      "id": "stellar",
+      "name": "Stellar",
+      "tags": ["infra", "blockchain", "public-goods"],
+      "ecosystem": "web3",
+      "cp_total": 1800
+    },
+    {
+      "id": "ripple",
+      "name": "Ripple",
+      "tags": ["infra", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 3700
+    },
+    {
+      "id": "bitcoin",
+      "name": "Bitcoin",
+      "tags": ["infra", "blockchain", "public-goods"],
+      "ecosystem": "web3",
+      "cp_total": 6000
+    },
+    {
+      "id": "monero",
+      "name": "Monero",
+      "tags": ["infra", "blockchain", "privacy"],
+      "ecosystem": "web3",
+      "cp_total": 700
+    },
+    {
+      "id": "zcash",
+      "name": "Zcash",
+      "tags": ["infra", "blockchain", "privacy"],
+      "ecosystem": "web3",
+      "cp_total": 600
+    },
+    {
+      "id": "dash",
+      "name": "Dash",
+      "tags": ["infra", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 500
+    },
+    {
+      "id": "litecoin",
+      "name": "Litecoin",
+      "tags": ["infra", "blockchain"],
+      "ecosystem": "web3",
+      "cp_total": 800
+    }
+  ],
+  "affiliations": [
+    {
+      "from_project_id": "filecoin",
+      "to_project_id": "ipfs",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "the-graph",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "the-graph",
+      "to_project_id": "ipfs",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "uniswap",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "compound",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "maker",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "aave",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "optimism",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "arbitrum",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "polygon",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "zksync",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "starknet",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "ens",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "chainlink",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "gitcoin",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "arweave",
+      "to_project_id": "ipfs",
+      "type": "library"
+    },
+    {
+      "from_project_id": "filecoin",
+      "to_project_id": "ipfs",
+      "type": "library"
+    },
+    {
+      "from_project_id": "matrix",
+      "to_project_id": "signal",
+      "type": "affiliated"
+    },
+    {
+      "from_project_id": "tor",
+      "to_project_id": "mozilla",
+      "type": "affiliated"
+    },
+    {
+      "from_project_id": "wikipedia",
+      "to_project_id": "wikimedia",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "khan-academy",
+      "to_project_id": "wikipedia",
+      "type": "library"
+    },
+    {
+      "from_project_id": "protocol-labs",
+      "to_project_id": "ipfs",
+      "type": "contributor"
+    },
+    {
+      "from_project_id": "protocol-labs",
+      "to_project_id": "filecoin",
+      "type": "contributor"
+    },
+    {
+      "from_project_id": "ethereum-foundation",
+      "to_project_id": "ethereum",
+      "type": "contributor"
+    },
+    {
+      "from_project_id": "ethereum-foundation",
+      "to_project_id": "optimism",
+      "type": "contributor"
+    },
+    {
+      "from_project_id": "ethereum-foundation",
+      "to_project_id": "arbitrum",
+      "type": "contributor"
+    },
+    {
+      "from_project_id": "ethereum-foundation",
+      "to_project_id": "gitcoin",
+      "type": "contributor"
+    },
+    {
+      "from_project_id": "cosmos",
+      "to_project_id": "polkadot",
+      "type": "affiliated"
+    },
+    {
+      "from_project_id": "near",
+      "to_project_id": "ethereum",
+      "type": "library"
+    },
+    {
+      "from_project_id": "solana",
+      "to_project_id": "ethereum",
+      "type": "library"
+    },
+    {
+      "from_project_id": "avalanche",
+      "to_project_id": "ethereum",
+      "type": "library"
+    },
+    {
+      "from_project_id": "celo",
+      "to_project_id": "ethereum",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "stellar",
+      "to_project_id": "ripple",
+      "type": "affiliated"
+    },
+    {
+      "from_project_id": "monero",
+      "to_project_id": "bitcoin",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "zcash",
+      "to_project_id": "bitcoin",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "litecoin",
+      "to_project_id": "bitcoin",
+      "type": "built_on"
+    },
+    {
+      "from_project_id": "dash",
+      "to_project_id": "bitcoin",
+      "type": "built_on"
+    }
+  ],
+  "grants": [
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "gitcoin",
+      "direction": "given",
+      "amount": 5000000,
+      "date": "2023-01-15"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "optimism",
+      "direction": "given",
+      "amount": 3000000,
+      "date": "2023-02-20"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "arbitrum",
+      "direction": "given",
+      "amount": 2500000,
+      "date": "2023-03-10"
+    },
+    {
+      "from_id": "org:protocol-labs",
+      "to_id": "ipfs",
+      "direction": "given",
+      "amount": 8000000,
+      "date": "2023-01-05"
+    },
+    {
+      "from_id": "org:protocol-labs",
+      "to_id": "filecoin",
+      "direction": "given",
+      "amount": 12000000,
+      "date": "2023-02-15"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "arweave",
+      "direction": "given",
+      "amount": 500000,
+      "date": "2023-04-01"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "ens",
+      "direction": "given",
+      "amount": 300000,
+      "date": "2023-04-15"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "the-graph",
+      "direction": "given",
+      "amount": 400000,
+      "date": "2023-05-01"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "chainlink",
+      "direction": "given",
+      "amount": 600000,
+      "date": "2023-05-20"
+    },
+    {
+      "from_id": "org:wikimedia",
+      "to_id": "wikipedia",
+      "direction": "given",
+      "amount": 15000000,
+      "date": "2023-01-01"
+    },
+    {
+      "from_id": "org:wikimedia",
+      "to_id": "khan-academy",
+      "direction": "given",
+      "amount": 2000000,
+      "date": "2023-03-01"
+    },
+    {
+      "from_id": "org:mozilla",
+      "to_id": "tor",
+      "direction": "given",
+      "amount": 1000000,
+      "date": "2023-02-10"
+    },
+    {
+      "from_id": "org:mozilla",
+      "to_id": "signal",
+      "direction": "given",
+      "amount": 800000,
+      "date": "2023-03-15"
+    },
+    {
+      "from_id": "org:mozilla",
+      "to_id": "matrix",
+      "direction": "given",
+      "amount": 500000,
+      "date": "2023-04-01"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "uniswap",
+      "direction": "given",
+      "amount": 1500000,
+      "date": "2023-06-01"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "compound",
+      "direction": "given",
+      "amount": 1200000,
+      "date": "2023-06-15"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "maker",
+      "direction": "given",
+      "amount": 1800000,
+      "date": "2023-07-01"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "aave",
+      "direction": "given",
+      "amount": 2000000,
+      "date": "2023-07-15"
+    },
+    {
+      "from_id": "org:protocol-labs",
+      "to_id": "the-graph",
+      "direction": "given",
+      "amount": 1000000,
+      "date": "2023-05-10"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "optimism",
+      "direction": "given",
+      "amount": 700000,
+      "date": "2023-08-01"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "arbitrum",
+      "direction": "given",
+      "amount": 600000,
+      "date": "2023-08-15"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "polygon",
+      "direction": "given",
+      "amount": 500000,
+      "date": "2023-09-01"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "chainlink",
+      "direction": "given",
+      "amount": 1000000,
+      "date": "2023-09-15"
+    },
+    {
+      "from_id": "org:ethereum-foundation",
+      "to_id": "ens",
+      "direction": "given",
+      "amount": 800000,
+      "date": "2023-10-01"
+    },
+    {
+      "from_id": "org:protocol-labs",
+      "to_id": "arweave",
+      "direction": "given",
+      "amount": 400000,
+      "date": "2023-10-15"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "celo",
+      "direction": "given",
+      "amount": 300000,
+      "date": "2023-11-01"
+    },
+    {
+      "from_id": "org:gitcoin",
+      "to_id": "stellar",
+      "direction": "given",
+      "amount": 250000,
+      "date": "2023-11-15"
+    },
+    {
+      "from_id": "org:mozilla",
+      "to_id": "ipfs",
+      "direction": "given",
+      "amount": 600000,
+      "date": "2023-12-01"
+    },
+    {
+      "from_id": "org:wikimedia",
+      "to_id": "ipfs",
+      "direction": "given",
+      "amount": 500000,
+      "date": "2023-12-15"
+    }
+  ]
+}
+
