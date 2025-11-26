@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering since we use searchParams
+export const dynamic = 'force-dynamic';
+
 /**
  * Task 9: Debug endpoint to test specific projects
  * GET /api/debug-project?projectId=57

@@ -3,6 +3,9 @@ import { getPensieveData } from '@/lib/pensieve';
 import { normalizeToGraph3D } from '@/lib/normalize';
 import { GraphMode } from '@/lib/types';
 
+// Force dynamic rendering since we use searchParams
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

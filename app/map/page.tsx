@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Graph3D, GraphMode } from '@/lib/types';
 import { fetchGraph } from '@/lib/api';
@@ -25,7 +25,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-export default function MapPage() {
+function MapPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [graph, setGraph] = useState<Graph3D | null>(null);
@@ -35,7 +35,18 @@ export default function MapPage() {
     null
   );
   const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>();
+  const [isDesktop, setIsDesktop] = useState(false);
   // const graphRef = useRef<Graph3DRef>(null); // Disabled: ref issues with dynamic components
+
+  // Check if we're on desktop (client-side only)
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
 
   // Read URL params - map old values for backward compatibility
   const modeParam = searchParams.get('mode') || 'stack_integration';
@@ -275,7 +286,7 @@ export default function MapPage() {
         </div>
         
         {/* Sidebar: Hidden on mobile when no node selected, visible on desktop */}
-        {(selectedNode || window.innerWidth >= 768) && (
+        {(selectedNode || isDesktop) && (
           <Sidebar
             node={selectedNode}
             graph={graph}
@@ -286,5 +297,17 @@ export default function MapPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function MapPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-white text-lg">Loading graph...</div>
+      </div>
+    }>
+      <MapPageContent />
+    </Suspense>
   );
 }

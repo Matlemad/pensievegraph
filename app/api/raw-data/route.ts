@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Force dynamic rendering since we use searchParams
+export const dynamic = 'force-dynamic';
+
 /**
  * Endpoint to get raw Pensieve API data for debugging
  * GET /api/raw-data?limit=1
