@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { GraphMode, AVAILABLE_CATEGORIES, Graph3D } from '@/lib/types';
 
@@ -32,19 +32,20 @@ export default function Controls({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filter suggestions based on search query
-  const suggestions = graph?.nodes
-    ? graph.nodes
-        .filter((node) => {
-          const query = searchQuery.toLowerCase();
-          return (
-            query.length > 0 &&
-            (node.label.toLowerCase().includes(query) ||
-              node.id.toLowerCase().includes(query))
-          );
-        })
-        .slice(0, 10) // Limit to 10 suggestions
-    : [];
+  // Memoized suggestions based on search query
+  const suggestions = useMemo(() => {
+    if (!graph?.nodes || !searchQuery.trim()) return [];
+    
+    const query = searchQuery.toLowerCase();
+    return graph.nodes
+      .filter((node) => {
+        return (
+          node.label.toLowerCase().includes(query) ||
+          node.id.toLowerCase().includes(query)
+        );
+      })
+      .slice(0, 10); // Limit to 10 suggestions
+  }, [graph?.nodes, searchQuery]);
 
   // Update dropdown position when input is focused or suggestions change
   useEffect(() => {
@@ -230,9 +231,6 @@ export default function Controls({
             )}
           </div>
         </div>
-
-        {/* Reset Camera - Hidden: ref issues with dynamic components */}
-        {/* Will be re-enabled when we fix the ref forwarding issue */}
       </div>
     </div>
   );

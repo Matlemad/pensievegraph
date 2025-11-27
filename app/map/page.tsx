@@ -1,29 +1,15 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
+import { useEffect, useState, useCallback, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Graph3D, GraphMode } from '@/lib/types';
 import { fetchGraph } from '@/lib/api';
 import Graph3DComponent from '@/components/Graph3D';
 import Controls from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
-
-// Debounce utility
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
+import ProjectDrawer from '@/components/ProjectDrawer';
+import { useDebounce } from '@/lib/hooks/useDebounce';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 
 function MapPageContent() {
   const searchParams = useSearchParams();
@@ -35,32 +21,29 @@ function MapPageContent() {
     null
   );
   const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>();
-  const [isDesktop, setIsDesktop] = useState(false);
-  // const graphRef = useRef<Graph3DRef>(null); // Disabled: ref issues with dynamic components
+  const isDesktop = useIsDesktop();
+  const [drawerProjectId, setDrawerProjectId] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Check if we're on desktop (client-side only)
-  useEffect(() => {
-    const checkDesktop = () => {
-      setIsDesktop(window.innerWidth >= 768);
+  // Memoized URL params parsing - map old values for backward compatibility
+  const { mode, category, limit, focusParam } = useMemo(() => {
+    const modeParam = searchParams.get('mode') || 'stack_integration';
+    let modeValue: GraphMode;
+    if (modeParam === 'affiliations') {
+      modeValue = 'affiliation';
+    } else if (modeParam === 'funding') {
+      modeValue = 'funding_received';
+    } else {
+      modeValue = modeParam as GraphMode;
+    }
+    
+    return {
+      mode: modeValue,
+      category: searchParams.get('category') || '',
+      limit: parseInt(searchParams.get('limit') || '800', 10),
+      focusParam: searchParams.get('focus'),
     };
-    checkDesktop();
-    window.addEventListener('resize', checkDesktop);
-    return () => window.removeEventListener('resize', checkDesktop);
-  }, []);
-
-  // Read URL params - map old values for backward compatibility
-  const modeParam = searchParams.get('mode') || 'stack_integration';
-  let mode: GraphMode;
-  if (modeParam === 'affiliations') {
-    mode = 'affiliation';
-  } else if (modeParam === 'funding') {
-    mode = 'funding_received';
-  } else {
-    mode = modeParam as GraphMode;
-  }
-  const category = searchParams.get('category') || '';
-  const limit = parseInt(searchParams.get('limit') || '800', 10);
-  const focusParam = searchParams.get('focus');
+  }, [searchParams]);
 
   // Update URL params - use replace to avoid too many history entries
   const updateURL = useCallback(
@@ -218,6 +201,24 @@ function MapPageContent() {
     []
   );
 
+  // Handle node double click - open drawer
+  const handleNodeDoubleClick = useCallback(
+    (node: Graph3D['nodes'][0]) => {
+      setDrawerProjectId(node.id);
+      setIsDrawerOpen(true);
+    },
+    []
+  );
+
+  // Handle drawer close
+  const handleDrawerClose = useCallback(() => {
+    setIsDrawerOpen(false);
+    // Keep projectId for a moment to allow smooth closing animation
+    setTimeout(() => {
+      setDrawerProjectId(null);
+    }, 300);
+  }, []);
+
   // Handle isolate neighborhood
   const handleIsolateNeighborhood = useCallback(
     (nodeId: string) => {
@@ -269,15 +270,14 @@ function MapPageContent() {
       />
       <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
         <div className="flex-1 relative">
-          {graph && graph.nodes && graph.nodes.length > 0 ? (
-            <>
-              <Graph3DComponent
-                data={graph}
-                onNodeClick={handleNodeClick}
-                selectedNodeId={selectedNode?.id}
-                focusedNodeId={focusedNodeId}
-              />
-            </>
+          {graph?.nodes?.length > 0 ? (
+            <Graph3DComponent
+              data={graph}
+              onNodeClick={handleNodeClick}
+              onNodeDoubleClick={handleNodeDoubleClick}
+              selectedNodeId={selectedNode?.id}
+              focusedNodeId={focusedNodeId}
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white">
               No data available in the graph
@@ -296,6 +296,14 @@ function MapPageContent() {
           />
         )}
       </div>
+
+      {/* Project Drawer - opens on double click */}
+      <ProjectDrawer
+        projectId={drawerProjectId}
+        isOpen={isDrawerOpen}
+        onClose={handleDrawerClose}
+        graph={graph}
+      />
     </div>
   );
 }

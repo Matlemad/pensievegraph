@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useRef, forwardRef } from 'react';
+import { useEffect, useRef, forwardRef, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Graph3D } from '@/lib/types';
+import { getLinkColor, getFocusedNodeColor } from '@/lib/utils/colorUtils';
+import { GRAPH_CONFIG, isEnhancedLinkType } from '@/lib/utils/graphConfig';
 
-// Dynamic import with proper error handling and forwardRef support
+// Dynamic import for 3D graph
 const ForceGraph3DBase = dynamic(
   () => import('react-force-graph-3d').then((mod) => mod.default || mod),
   { 
@@ -23,28 +25,230 @@ ForceGraph3D.displayName = 'ForceGraph3D';
 interface Graph3DProps {
   data: Graph3D;
   onNodeClick?: (node: Graph3D['nodes'][0]) => void;
+  onNodeDoubleClick?: (node: Graph3D['nodes'][0]) => void;
   selectedNodeId?: string;
   focusedNodeId?: string;
 }
 
+const DOUBLE_CLICK_THRESHOLD_MS = 300;
+
 export default function Graph3DComponent({
   data,
   onNodeClick,
+  onNodeDoubleClick,
   selectedNodeId,
   focusedNodeId,
 }: Graph3DProps) {
-    const fgRef = useRef<any>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const lastClickRef = useRef<{ nodeId: string; timestamp: number } | null>(null);
+  const fgRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastClickRef = useRef<{ nodeId: string; timestamp: number } | null>(null);
 
-    // Callback ref to ensure we capture the instance when it's mounted
-    const setFgRef = (instance: any) => {
-      if (instance) {
-        fgRef.current = instance;
-        console.log('[Graph3D] Instance captured and ready');
+  // Callback ref to ensure we capture the instance when it's mounted
+  const setFgRef = useCallback((instance: any) => {
+    if (instance) {
+      fgRef.current = instance;
+    }
+  }, []);
+
+  // Memoized node label function
+  const nodeLabel = useCallback((n: any) => {
+    try {
+      const node = n as Graph3D['nodes'][0];
+      return `${node.label || 'Unknown'} • ${node.kind || 'project'}${node.cp ? ` • CP ${node.cp}` : ''}`;
+    } catch {
+      return 'Unknown';
+    }
+  }, []);
+
+  // Memoized node value function
+  const nodeVal = useCallback((n: any) => {
+    try {
+      const node = n as Graph3D['nodes'][0];
+      const cp = node.cp || 0;
+      return Math.max(
+        GRAPH_CONFIG.nodeSizeRange.min,
+        Math.min(GRAPH_CONFIG.nodeSizeRange.max, cp / GRAPH_CONFIG.nodeSizeDivisor)
+      );
+    } catch {
+      return 1;
+    }
+  }, []);
+
+  // Memoized node color function
+  const nodeColor = useCallback((n: any) => {
+    if (!n) return '#60a5fa';
+    try {
+      const node = n as Graph3D['nodes'][0];
+      if (!node?.id) return '#60a5fa';
+      
+      if (node.id === focusedNodeId) {
+        const currentTime = Date.now() / 1000;
+        const pulse = (Math.sin(currentTime * 6) + 1) / 2;
+        const intensity = 0.7 + pulse * 0.3;
+        return getFocusedNodeColor(pulse, intensity);
+      }
+      
+      if (node.id === selectedNodeId) {
+        return '#ef4444';
+      }
+      
+      const kind = node.kind || 'project';
+      if (kind === 'org') return '#f59e0b';
+      if (kind === 'person') return '#a78bfa';
+      return '#60a5fa';
+    } catch {
+      return '#60a5fa';
+    }
+  }, [focusedNodeId, selectedNodeId]);
+
+  // Memoized link color function
+  const linkColor = useCallback((l: any) => {
+    if (!l) return '#94a3b8';
+    try {
+      const link = l as Graph3D['links'][0];
+      if (!link) return '#94a3b8';
+      const linkType = link.type || 'affiliated';
+      const currentTime = Date.now() / 1000;
+      const pulse = (Math.sin(currentTime * 2) + 1) / 2;
+      return getLinkColor(linkType, pulse);
+    } catch {
+      return '#94a3b8';
+    }
+  }, []);
+
+  // Memoized link width function
+  const linkWidth = useCallback((l: any) => {
+    try {
+      const link = l as Graph3D['links'][0];
+      const baseWidth = link.weight || 1;
+      const linkType = link.type || 'affiliated';
+      
+      if (isEnhancedLinkType(linkType)) {
+        return Math.max(
+          GRAPH_CONFIG.linkWidthRange.min,
+          Math.min(GRAPH_CONFIG.linkWidthRange.max, baseWidth * GRAPH_CONFIG.linkWidthMultiplier)
+        );
+      }
+      return Math.max(0.5, Math.min(4, baseWidth));
+    } catch {
+      return 1;
+    }
+  }, []);
+
+  // Memoized enhanced link property function factory
+  const createEnhancedLinkProperty = useCallback((value: number) => {
+    return (l: any) => {
+      try {
+        const link = l as Graph3D['links'][0];
+        const linkType = link.type || 'affiliated';
+        return isEnhancedLinkType(linkType) ? value : 0;
+      } catch {
+        return 0;
       }
     };
+  }, []);
 
+  const linkDirectionalParticles = useMemo(
+    () => createEnhancedLinkProperty(GRAPH_CONFIG.particleCount),
+    [createEnhancedLinkProperty]
+  );
+  
+  const linkDirectionalArrowLength = useMemo(
+    () => createEnhancedLinkProperty(GRAPH_CONFIG.arrowLength),
+    [createEnhancedLinkProperty]
+  );
+  
+  const linkDirectionalParticleSpeed = useMemo(
+    () => createEnhancedLinkProperty(GRAPH_CONFIG.particleSpeed),
+    [createEnhancedLinkProperty]
+  );
+  
+  const linkDirectionalParticleWidth = useMemo(
+    () => createEnhancedLinkProperty(GRAPH_CONFIG.particleWidth),
+    [createEnhancedLinkProperty]
+  );
+
+  // Memoized link particle color function
+  const linkDirectionalParticleColor = useCallback((l: any) => {
+    try {
+      const link = l as Graph3D['links'][0];
+      const linkType = link.type || 'affiliated';
+      const currentTime = Date.now() / 1000;
+      const pulse = (Math.sin(currentTime * 2) + 1) / 2;
+      return getLinkColor(linkType, pulse);
+    } catch {
+      return '#94a3b8';
+    }
+  }, []);
+
+  // Memoized node click handler
+  const handleNodeClick = useCallback((node: any) => {
+    try {
+      const n = node as Graph3D['nodes'][0];
+      const now = Date.now();
+      const lastClick = lastClickRef.current;
+      
+      if (lastClick && lastClick.nodeId === n.id && (now - lastClick.timestamp) < DOUBLE_CLICK_THRESHOLD_MS) {
+        onNodeDoubleClick?.(n);
+        lastClickRef.current = null;
+      } else {
+        lastClickRef.current = { nodeId: n.id, timestamp: now };
+        onNodeClick?.(n);
+        setTimeout(() => {
+          if (lastClickRef.current?.nodeId === n.id) {
+            lastClickRef.current = null;
+          }
+        }, DOUBLE_CLICK_THRESHOLD_MS);
+      }
+    } catch (error) {
+      console.error('onNodeClick error:', error);
+    }
+  }, [onNodeClick, onNodeDoubleClick]);
+
+  // Memoized engine stop handler
+  const handleEngineStop = useCallback(() => {
+    try {
+      if (fgRef.current) {
+        fgRef.current.zoomToFit(400);
+      }
+    } catch (error) {
+      console.warn('onEngineStop error:', error);
+    }
+  }, []);
+
+  // Memoized graph props
+  const graphProps = useMemo(() => ({
+    graphData: data,
+    nodeId: 'id',
+    nodeLabel,
+    nodeVal,
+    nodeColor,
+    linkColor,
+    linkWidth,
+    linkDirectionalParticles,
+    linkDirectionalArrowLength,
+    linkDirectionalParticleSpeed,
+    linkDirectionalParticleWidth,
+    linkDirectionalParticleColor,
+    onNodeClick: handleNodeClick,
+    backgroundColor: GRAPH_CONFIG.backgroundColor,
+    cooldownTicks: GRAPH_CONFIG.cooldownTicks,
+    onEngineStop: handleEngineStop,
+  }), [
+    data,
+    nodeLabel,
+    nodeVal,
+    nodeColor,
+    linkColor,
+    linkWidth,
+    linkDirectionalParticles,
+    linkDirectionalArrowLength,
+    linkDirectionalParticleSpeed,
+    linkDirectionalParticleWidth,
+    linkDirectionalParticleColor,
+    handleNodeClick,
+    handleEngineStop,
+  ]);
 
   // Auto-zoom to focused node when searching
   useEffect(() => {
@@ -54,15 +258,12 @@ export default function Graph3DComponent({
       if (!fgRef.current) return;
       
       try {
-        // Try multiple approaches to find and zoom to the node
         const graphData = fgRef.current.getGraphData();
         const node = graphData.nodes.find((n: any) => n.id === focusedNodeId);
         
         if (node) {
-          // Wait for node to have position (force graph needs time to calculate)
           const checkPosition = (attempts = 0) => {
             if (attempts > 20) {
-              // Fallback: use zoomToFit with filter
               fgRef.current.zoomToFit(400, 0, (n: any) => n.id === focusedNodeId);
               return;
             }
@@ -71,42 +272,39 @@ export default function Graph3DComponent({
               (n: any) => n.id === focusedNodeId
             );
             
-            if (currentNode && (currentNode.x !== undefined || currentNode.y !== undefined || currentNode.z !== undefined)) {
-              // Node has position, zoom to it
-              const distance = 150; // Closer zoom for better visibility
-              const distRatio = 1 + distance / Math.hypot(
-                currentNode.x || 0, 
-                currentNode.y || 0, 
+            if (currentNode && (currentNode.x !== undefined || currentNode.y !== undefined)) {
+              const distRatio = 1 + GRAPH_CONFIG.zoomDistance / Math.hypot(
+                currentNode.x || 0,
+                currentNode.y || 0,
                 currentNode.z || 0
               );
-
-              fgRef.current.cameraPosition(
-                {
-                  x: (currentNode.x || 0) * distRatio,
-                  y: (currentNode.y || 0) * distRatio,
-                  z: (currentNode.z || 0) * distRatio,
-                },
-                { 
-                  x: currentNode.x || 0, 
-                  y: currentNode.y || 0, 
-                  z: currentNode.z || 0 
-                },
-                1500 // Faster animation
-              );
+              
+              if (fgRef.current.cameraPosition) {
+                fgRef.current.cameraPosition(
+                  {
+                    x: (currentNode.x || 0) * distRatio,
+                    y: (currentNode.y || 0) * distRatio,
+                    z: (currentNode.z || 0) * distRatio,
+                  },
+                  {
+                    x: currentNode.x || 0,
+                    y: currentNode.y || 0,
+                    z: currentNode.z || 0
+                  },
+                  GRAPH_CONFIG.zoomDuration
+                );
+              }
             } else {
-              // Node position not ready yet, retry
               setTimeout(() => checkPosition(attempts + 1), 100);
             }
           };
           
           checkPosition();
         } else {
-          // Node not found, use zoomToFit as fallback
           fgRef.current.zoomToFit(400, 0, (n: any) => n.id === focusedNodeId);
         }
-      } catch (e) {
-        console.warn('[Graph3D] Error zooming to node:', e);
-        // Fallback
+      } catch (error) {
+        console.warn('[Graph3D] Error zooming to node:', error);
         try {
           fgRef.current.zoomToFit(400, 0, (n: any) => n.id === focusedNodeId);
         } catch (e2) {
@@ -115,14 +313,13 @@ export default function Graph3DComponent({
       }
     };
 
-    // Immediate attempt, then retry after a short delay
     zoomToNode();
     const timeout = setTimeout(zoomToNode, 300);
     
     return () => clearTimeout(timeout);
   }, [focusedNodeId]);
 
-  if (!data || !data.nodes || data.nodes.length === 0) {
+  if (!data?.nodes?.length) {
     return (
       <div className="w-full h-full flex items-center justify-center text-white">
         No data available
@@ -133,289 +330,7 @@ export default function Graph3DComponent({
   return (
     <div ref={containerRef} className="w-full h-full">
       {/* @ts-ignore - react-force-graph-3d types issue with dynamic import */}
-      <ForceGraph3D
-        ref={setFgRef}
-        graphData={data}
-        nodeId="id"
-        nodeLabel={(n: any) => {
-          try {
-            const node = n as Graph3D['nodes'][0];
-            return `${node.label || 'Unknown'} • ${node.kind || 'project'}${node.cp ? ` • CP ${node.cp}` : ''}`;
-          } catch (e) {
-            return 'Unknown';
-          }
-        }}
-        nodeVal={(n: any) => {
-          try {
-            const node = n as Graph3D['nodes'][0];
-            const cp = node.cp || 0;
-            // Return normal size - no pulsing
-            return Math.max(1, Math.min(12, cp / 300));
-          } catch (e) {
-            return 1;
-          }
-        }}
-        nodeColor={(n: any) => {
-          // Always ensure we have a valid node object
-          if (!n) return '#60a5fa';
-          
-          try {
-            const node = n as Graph3D['nodes'][0];
-            if (!node || !node.id) return '#60a5fa';
-            
-            // ALWAYS return a valid hex color string
-            // Prioritize focused over selected (focused = green pulsating, selected = red)
-            if (node.id === focusedNodeId) {
-              // Pulsing fluorescent green for focused/searched nodes
-              // Calculate pulse directly from current time for real-time animation
-              const currentTime = Date.now() / 1000;
-              const pulse = (Math.sin(currentTime * 6) + 1) / 2; // 0 to 1, faster pulse (6x speed)
-              
-              // Use more contrasting colors: bright green to lime green with higher intensity
-              const color1 = { r: 0x00, g: 0xFF, b: 0x00 }; // Bright green #00FF00
-              const color2 = { r: 0x39, g: 0xFF, b: 0x14 }; // Lime green #39FF14 (fluorescent)
-              
-              // Increase intensity for better visibility
-              const intensity = 0.7 + pulse * 0.3; // Pulse between 0.7 and 1.0 intensity
-              
-              const r = Math.round((color1.r + (color2.r - color1.r) * pulse) * intensity);
-              const g = Math.round((color1.g + (color2.g - color1.g) * pulse) * intensity);
-              const b = Math.round((color1.b + (color2.b - color1.b) * pulse) * intensity);
-              
-              return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-            }
-            if (node.id === selectedNodeId) {
-              return '#ef4444'; // red for selected (only if not focused)
-            }
-            // Use color by kind
-            const kind = node.kind || 'project';
-            if (kind === 'org') {
-              return '#f59e0b'; // orange for org
-            }
-            if (kind === 'person') {
-              return '#a78bfa'; // purple for person
-            }
-            // Default: blue for project
-            return '#60a5fa';
-          } catch (e) {
-            console.warn('nodeColor error:', e, n);
-            return '#60a5fa'; // fallback color
-          }
-        }}
-        linkColor={(l: any) => {
-          // Always ensure we have a valid link object
-          if (!l) return '#94a3b8';
-          
-          try {
-            const link = l as Graph3D['links'][0];
-            if (!link) return '#94a3b8';
-            
-            // ALWAYS return a valid hex color string
-            const linkType = link.type || 'affiliated';
-            const currentTime = Date.now() / 1000;
-            const pulse = (Math.sin(currentTime * 2) + 1) / 2; // 0 to 1
-            
-            if (linkType === 'grant') {
-              // Pulsing gold color animation
-              const color1 = { r: 0xF5, g: 0xDA, b: 0x61 }; // #F5DA61
-              const color2 = { r: 0xF5, g: 0xD3, b: 0x35 }; // #F5D335
-              
-              const r = Math.round(color1.r + (color2.r - color1.r) * pulse);
-              const g = Math.round(color1.g + (color2.g - color1.g) * pulse);
-              const b = Math.round(color1.b + (color2.b - color1.b) * pulse);
-              
-              return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-            } else if (linkType === 'affiliated' || linkType === 'contributor') {
-              // Pulsing bright white for affiliation links
-              const color1 = { r: 0xFF, g: 0xFF, b: 0xFF }; // #FFFFFF pure white
-              const color2 = { r: 0xE0, g: 0xE0, b: 0xE0 }; // #E0E0E0 light gray (slightly dimmed for contrast)
-              
-              const r = Math.round(color1.r + (color2.r - color1.r) * pulse);
-              const g = Math.round(color1.g + (color2.g - color1.g) * pulse);
-              const b = Math.round(color1.b + (color2.b - color1.b) * pulse);
-              
-              return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-            } else if (linkType === 'built_on' || linkType === 'library') {
-              // Pulsing fuchsia for stack integration links
-              const color1 = { r: 0xFF, g: 0x00, b: 0xFF }; // #FF00FF pure fuchsia
-              const color2 = { r: 0xFF, g: 0x14, b: 0x93 }; // #FF1493 deep pink (slightly darker)
-              
-              const r = Math.round(color1.r + (color2.r - color1.r) * pulse);
-              const g = Math.round(color1.g + (color2.g - color1.g) * pulse);
-              const b = Math.round(color1.b + (color2.b - color1.b) * pulse);
-              
-              return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-            }
-            // Default: gray for other link types
-            return '#94a3b8';
-          } catch (e) {
-            console.warn('linkColor error:', e, l);
-            return '#94a3b8'; // fallback color
-          }
-        }}
-        linkWidth={(l: any) => {
-          try {
-            const link = l as Graph3D['links'][0];
-            const baseWidth = link.weight || 1;
-            const linkType = link.type || 'affiliated';
-            
-            // Make animated links more visible
-            if (linkType === 'grant' || linkType === 'affiliated' || linkType === 'contributor' || 
-                linkType === 'built_on' || linkType === 'library') {
-              return Math.max(2, Math.min(6, baseWidth * 2));
-            }
-            return Math.max(0.5, Math.min(4, baseWidth));
-          } catch (e) {
-            return 1;
-          }
-        }}
-        linkDirectionalParticles={(l: any) => {
-          try {
-            const link = l as Graph3D['links'][0];
-            const linkType = link.type || 'affiliated';
-            // Add particles for animated link types
-            if (linkType === 'grant' || linkType === 'affiliated' || linkType === 'contributor' || 
-                linkType === 'built_on' || linkType === 'library') {
-              return 8;
-            }
-            return 0;
-          } catch (e) {
-            return 0;
-          }
-        }}
-        linkDirectionalArrowLength={(l: any) => {
-          try {
-            const link = l as Graph3D['links'][0];
-            const linkType = link.type || 'affiliated';
-            // Add arrows for animated link types
-            if (linkType === 'grant' || linkType === 'affiliated' || linkType === 'contributor' || 
-                linkType === 'built_on' || linkType === 'library') {
-              return 8;
-            }
-            return 0;
-          } catch (e) {
-            return 0;
-          }
-        }}
-        linkDirectionalParticleSpeed={(l: any) => {
-          try {
-            const link = l as Graph3D['links'][0];
-            const linkType = link.type || 'affiliated';
-            // Add particle speed for animated link types
-            if (linkType === 'grant' || linkType === 'affiliated' || linkType === 'contributor' || 
-                linkType === 'built_on' || linkType === 'library') {
-              return 0.02;
-            }
-            return 0;
-          } catch (e) {
-            return 0;
-          }
-        }}
-        linkDirectionalParticleWidth={(l: any) => {
-          try {
-            const link = l as Graph3D['links'][0];
-            const linkType = link.type || 'affiliated';
-            // Add particle width for animated link types
-            if (linkType === 'grant' || linkType === 'affiliated' || linkType === 'contributor' || 
-                linkType === 'built_on' || linkType === 'library') {
-              return 3;
-            }
-            return 0;
-          } catch (e) {
-            return 0;
-          }
-        }}
-        linkDirectionalParticleColor={(l: any, t: number) => {
-          try {
-            const link = l as Graph3D['links'][0];
-            const linkType = link.type || 'affiliated';
-            const currentTime = Date.now() / 1000;
-            const pulse = (Math.sin(currentTime * 2) + 1) / 2; // 0 to 1
-            
-            if (linkType === 'grant') {
-              // Pulsing animation from #F5DA61 to #F5D335
-              const color1 = { r: 0xF5, g: 0xDA, b: 0x61 }; // #F5DA61
-              const color2 = { r: 0xF5, g: 0xD3, b: 0x35 }; // #F5D335
-              
-              const r = Math.round(color1.r + (color2.r - color1.r) * pulse);
-              const g = Math.round(color1.g + (color2.g - color1.g) * pulse);
-              const b = Math.round(color1.b + (color2.b - color1.b) * pulse);
-              
-              return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-            } else if (linkType === 'affiliated' || linkType === 'contributor') {
-              // Pulsing bright white for affiliation particles
-              const color1 = { r: 0xFF, g: 0xFF, b: 0xFF }; // #FFFFFF pure white
-              const color2 = { r: 0xE0, g: 0xE0, b: 0xE0 }; // #E0E0E0 light gray
-              
-              const r = Math.round(color1.r + (color2.r - color1.r) * pulse);
-              const g = Math.round(color1.g + (color2.g - color1.g) * pulse);
-              const b = Math.round(color1.b + (color2.b - color1.b) * pulse);
-              
-              return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-            } else if (linkType === 'built_on' || linkType === 'library') {
-              // Pulsing fuchsia for stack integration particles
-              const color1 = { r: 0xFF, g: 0x00, b: 0xFF }; // #FF00FF pure fuchsia
-              const color2 = { r: 0xFF, g: 0x14, b: 0x93 }; // #FF1493 deep pink
-              
-              const r = Math.round(color1.r + (color2.r - color1.r) * pulse);
-              const g = Math.round(color1.g + (color2.g - color1.g) * pulse);
-              const b = Math.round(color1.b + (color2.b - color1.b) * pulse);
-              
-              return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-            }
-            return '#94a3b8';
-          } catch (e) {
-            return '#94a3b8'; // fallback
-          }
-        }}
-        onNodeClick={(node: any) => {
-          try {
-            const n = node as Graph3D['nodes'][0];
-            const now = Date.now();
-            const lastClick = lastClickRef.current;
-            
-            // Check if this is a double click (same node within 300ms)
-            if (lastClick && lastClick.nodeId === n.id && (now - lastClick.timestamp) < 300) {
-              // Double click detected - open Pensieve URL
-              if (n.kind === 'project' && n.id) {
-                // Extract project ID from node.id (format: "project:123")
-                const projectId = n.id.replace(/^(project|org|person):/, '');
-                const pensieveUrl = `https://pensieve.ecf.network/project/${projectId}?tab=profile`;
-                window.open(pensieveUrl, '_blank', 'noopener,noreferrer');
-              }
-              // Reset to prevent triple clicks
-              lastClickRef.current = null;
-            } else {
-              // Single click - store for potential double click
-              lastClickRef.current = { nodeId: n.id, timestamp: now };
-              // Call the original onNodeClick handler
-              onNodeClick?.(n);
-              
-              // Clear the stored click after timeout to prevent accidental double clicks
-              setTimeout(() => {
-                if (lastClickRef.current?.nodeId === n.id) {
-                  lastClickRef.current = null;
-                }
-              }, 300);
-            }
-          } catch (e) {
-            console.error('onNodeClick error:', e);
-          }
-        }}
-        backgroundColor="#0a0a0a"
-        cooldownTicks={100}
-        onEngineStop={() => {
-          try {
-            if (fgRef.current) {
-              fgRef.current.zoomToFit(400);
-              console.log('[Graph3D] Engine stopped, auto zoomToFit');
-            }
-          } catch (e) {
-            console.warn('onEngineStop error:', e);
-          }
-        }}
-      />
+      <ForceGraph3D ref={setFgRef} {...graphProps} />
     </div>
   );
 }
-
