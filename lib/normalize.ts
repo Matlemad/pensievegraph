@@ -32,6 +32,16 @@ export function normalizeToGraph3D(
   const nodesMap = new Map<string, Graph3D['nodes'][0]>();
   const links: Graph3D['links'] = [];
 
+  // In funding_received mode, collect all project IDs involved in grants first
+  // so we can include givers even if they don't match the category filter
+  const projectsInvolvedInGrants = new Set<string>();
+  if (mode === 'funding_received') {
+    for (const grant of data.grants || []) {
+      projectsInvolvedInGrants.add(String(grant.from_id));
+      projectsInvolvedInGrants.add(String(grant.to_id));
+    }
+  }
+
   // Build nodes from projects
   for (const project of data.projects || []) {
     const cp = project.cp_total || 0;
@@ -41,9 +51,12 @@ export function normalizeToGraph3D(
 
     // Apply category filter
     // Category can be in project.category or in project.tags array (since categories[] is mapped to tags[])
+    // Exception: In funding_received mode, always include projects involved in grants
     if (category && category !== '') {
       const hasCategory = project.category === category || project.tags?.includes(category);
-      if (!hasCategory) {
+      const isInvolvedInGrant = mode === 'funding_received' && projectsInvolvedInGrants.has(project.id);
+      
+      if (!hasCategory && !isInvolvedInGrant) {
         continue;
       }
     }
@@ -101,6 +114,9 @@ export function normalizeToGraph3D(
     // Process grants
     // Note: All givers and receivers should be projects in the Pensieve dataset
     // (including referenced projects added by pensieve.ts logic)
+    let grantsProcessed = 0;
+    let grantsSkipped = 0;
+    
     for (const grant of data.grants || []) {
       // All grant IDs should be project IDs (no org: prefix needed)
       const sourceId = prefixId('project', grant.from_id);
@@ -121,7 +137,9 @@ export function normalizeToGraph3D(
           direction: 'out',
           weight,
         });
+        grantsProcessed++;
       } else {
+        grantsSkipped++;
         // This shouldn't happen if pensieve.ts correctly adds referenced projects
         if (process.env.NODE_ENV === 'development') {
           console.warn(
@@ -130,6 +148,10 @@ export function normalizeToGraph3D(
           );
         }
       }
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Normalize] Funding mode: processed ${grantsProcessed} grants, skipped ${grantsSkipped} grants`);
     }
   }
 
