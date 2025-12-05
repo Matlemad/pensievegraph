@@ -34,8 +34,11 @@ export async function GET(request: NextRequest) {
     const limitParam = searchParams.get('limit');
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
+    // Check if force refresh is requested
+    const forceRefresh = searchParams.get('refresh') === 'true';
+
     // Fetch Pensieve data
-    const pensieveData = await getPensieveData();
+    const pensieveData = await getPensieveData(forceRefresh);
 
     // Normalize to Graph3D (tag parameter removed - will be added when API supports it)
     const graph = normalizeToGraph3D(pensieveData, mode, undefined, category, limit);
