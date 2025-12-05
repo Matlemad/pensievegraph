@@ -39,8 +39,19 @@ export async function GET(request: NextRequest) {
 
     // Normalize to Graph3D (tag parameter removed - will be added when API supports it)
     const graph = normalizeToGraph3D(pensieveData, mode, undefined, category, limit);
+    
+    // Add build timestamp to force client refresh
+    graph.meta.generated_at = new Date().toISOString();
 
-    return NextResponse.json(graph);
+    // Disable caching to ensure fresh data on Vercel
+    return NextResponse.json(graph, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
   } catch (error) {
     console.error('Error in /api/graph:', error);
     const errorMessage =

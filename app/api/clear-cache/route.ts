@@ -11,6 +11,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       message: 'Cache cleared successfully',
       timestamp: new Date().toISOString(),
+      gitCommit: process.env.VERCEL_GIT_COMMIT_SHA || 'unknown',
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
     });
   } catch (error) {
     console.error('Error clearing cache:', error);
