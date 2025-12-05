@@ -3,6 +3,7 @@ import {
   PensieveProjectRelationsResponse,
   PensieveProjectRelationsListResponse,
   PensieveProjectSnapshot,
+  PensieveGrant,
 } from './types';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
@@ -474,22 +475,32 @@ async function fetchPensieveAPI(): Promise<PensieveData> {
           // Current project is always the receiver (since it's in funding_received_grants)
           const receiverId = projectId;
           
-          // Check if both giver and receiver exist in dataset
-          const giverExists = projectIdMap.has(Number(giverId)) || projectIdMap.has(giverId);
+          // Check if receiver exists in dataset (giver might not be in dataset, that's OK - we'll create org node)
           const receiverExists = projectIdMap.has(Number(receiverId)) || projectIdMap.has(receiverId);
+          const giverExists = projectIdMap.has(Number(giverId)) || projectIdMap.has(giverId);
           
+          // All givers should be projects (including referenced projects added above)
+          // Skip grants where giver or receiver doesn't exist in the full dataset
           if (giverExists && receiverExists) {
             const amount = grant.amount 
               ? (typeof grant.amount === 'string' ? parseFloat(grant.amount) : grant.amount)
               : undefined;
 
-            grants.push({
+            const grantData: PensieveGrant = {
               from_id: giverId,
               to_id: receiverId,
               direction: 'received',
               amount,
               date: grant.date,
-            });
+            };
+            
+            // Include names for debugging purposes only
+            if (giverName) {
+              grantData.from_name = giverName;
+            }
+            grantData.to_name = project.name;
+            
+            grants.push(grantData);
             grantsMapped++;
             
             if (process.env.NODE_ENV === 'development') {

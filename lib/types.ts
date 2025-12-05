@@ -199,6 +199,8 @@ export interface PensieveGrant {
   direction: 'given' | 'received';
   amount?: number;
   date?: string;
+  from_name?: string; // Name of the giver (for creating org nodes)
+  to_name?: string; // Name of the receiver
 }
 
 export interface PensieveData {

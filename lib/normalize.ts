@@ -99,58 +99,16 @@ export function normalizeToGraph3D(
     }
   } else if (mode === 'funding_received') {
     // Process grants
-    const orgNodes = new Map<string, Graph3D['nodes'][0]>();
-
+    // Note: All givers and receivers should be projects in the Pensieve dataset
+    // (including referenced projects added by pensieve.ts logic)
     for (const grant of data.grants || []) {
-      // Determine source and target based on direction
-      let sourceId: string;
-      let targetId: string;
+      // All grant IDs should be project IDs (no org: prefix needed)
+      const sourceId = prefixId('project', grant.from_id);
+      const targetId = prefixId('project', grant.to_id);
 
-      if (grant.direction === 'given') {
-        // from_id gives to to_id
-        sourceId = grant.from_id.startsWith('org:')
-          ? prefixId('org', grant.from_id.replace('org:', ''))
-          : prefixId('project', grant.from_id);
-        targetId = grant.to_id.startsWith('org:')
-          ? prefixId('org', grant.to_id.replace('org:', ''))
-          : prefixId('project', grant.to_id);
-      } else {
-        // received: to_id receives from from_id
-        targetId = grant.to_id.startsWith('org:')
-          ? prefixId('org', grant.to_id.replace('org:', ''))
-          : prefixId('project', grant.to_id);
-        sourceId = grant.from_id.startsWith('org:')
-          ? prefixId('org', grant.from_id.replace('org:', ''))
-          : prefixId('project', grant.from_id);
-      }
-
-      // Create org nodes if needed
-      if (sourceId.startsWith('org:')) {
-        if (!orgNodes.has(sourceId) && !nodesMap.has(sourceId)) {
-          orgNodes.set(sourceId, {
-            id: sourceId,
-            kind: 'org',
-            label: sourceId.replace('org:', ''),
-            cp: 0,
-          });
-        }
-      }
-      if (targetId.startsWith('org:')) {
-        if (!orgNodes.has(targetId) && !nodesMap.has(targetId)) {
-          orgNodes.set(targetId, {
-            id: targetId,
-            kind: 'org',
-            label: targetId.replace('org:', ''),
-            cp: 0,
-          });
-        }
-      }
-
-      // Only include if both nodes exist (or will exist)
-      const sourceExists =
-        nodesMap.has(sourceId) || orgNodes.has(sourceId);
-      const targetExists =
-        nodesMap.has(targetId) || orgNodes.has(targetId);
+      // Only include if both nodes exist in the dataset
+      const sourceExists = nodesMap.has(sourceId);
+      const targetExists = nodesMap.has(targetId);
 
       if (sourceExists && targetExists) {
         const amount = grant.amount || 0;
@@ -163,12 +121,15 @@ export function normalizeToGraph3D(
           direction: 'out',
           weight,
         });
+      } else {
+        // This shouldn't happen if pensieve.ts correctly adds referenced projects
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            `[Normalize] Grant skipped: ${grant.from_name || grant.from_id} -> ${grant.to_name || grant.to_id}. ` +
+            `Source exists: ${sourceExists}, Target exists: ${targetExists}`
+          );
+        }
       }
-    }
-
-    // Add org nodes to nodesMap
-    for (const orgNode of orgNodes.values()) {
-      nodesMap.set(orgNode.id, orgNode);
     }
   }
 
