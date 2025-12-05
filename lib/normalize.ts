@@ -42,21 +42,38 @@ export function normalizeToGraph3D(
     }
   }
 
+  // Also collect projects involved in affiliations/stack for other modes
+  const projectsInvolvedInLinks = new Set<string>();
+  if (mode === 'stack_integration' || mode === 'affiliation') {
+    for (const aff of data.affiliations || []) {
+      if (
+        (mode === 'stack_integration' && (aff.type === 'built_on' || aff.type === 'library')) ||
+        (mode === 'affiliation' && (aff.type === 'affiliated' || aff.type === 'contributor'))
+      ) {
+        projectsInvolvedInLinks.add(String(aff.from_project_id));
+        projectsInvolvedInLinks.add(String(aff.to_project_id));
+      }
+    }
+  }
+
   // Build nodes from projects
   for (const project of data.projects || []) {
     const cp = project.cp_total || 0;
+    const projectIdStr = String(project.id);
 
     // NOTE: Tag filter disabled until Pensieve API provides separate tags field
     // Currently API only provides 'categories' array
 
     // Apply category filter
     // Category can be in project.category or in project.tags array (since categories[] is mapped to tags[])
-    // Exception: In funding_received mode, always include projects involved in grants
+    // Exception: Always include projects involved in links/grants for the current mode
     if (category && category !== '') {
       const hasCategory = project.category === category || project.tags?.includes(category);
-      const isInvolvedInGrant = mode === 'funding_received' && projectsInvolvedInGrants.has(project.id);
+      const isInvolvedInLinks = 
+        (mode === 'funding_received' && projectsInvolvedInGrants.has(projectIdStr)) ||
+        ((mode === 'stack_integration' || mode === 'affiliation') && projectsInvolvedInLinks.has(projectIdStr));
       
-      if (!hasCategory && !isInvolvedInGrant) {
+      if (!hasCategory && !isInvolvedInLinks) {
         continue;
       }
     }
@@ -116,6 +133,7 @@ export function normalizeToGraph3D(
     // (including referenced projects added by pensieve.ts logic)
     let grantsProcessed = 0;
     let grantsSkipped = 0;
+    const missingNodes = new Set<string>();
     
     for (const grant of data.grants || []) {
       // All grant IDs should be project IDs (no org: prefix needed)
@@ -140,11 +158,14 @@ export function normalizeToGraph3D(
         grantsProcessed++;
       } else {
         grantsSkipped++;
+        if (!sourceExists) missingNodes.add(sourceId);
+        if (!targetExists) missingNodes.add(targetId);
+        
         // This shouldn't happen if pensieve.ts correctly adds referenced projects
         if (process.env.NODE_ENV === 'development') {
           console.warn(
             `[Normalize] Grant skipped: ${grant.from_name || grant.from_id} -> ${grant.to_name || grant.to_id}. ` +
-            `Source exists: ${sourceExists}, Target exists: ${targetExists}`
+            `Source exists: ${sourceExists} (${sourceId}), Target exists: ${targetExists} (${targetId})`
           );
         }
       }
@@ -152,6 +173,9 @@ export function normalizeToGraph3D(
     
     if (process.env.NODE_ENV === 'development') {
       console.log(`[Normalize] Funding mode: processed ${grantsProcessed} grants, skipped ${grantsSkipped} grants`);
+      if (missingNodes.size > 0) {
+        console.warn(`[Normalize] Missing nodes for grants:`, Array.from(missingNodes).slice(0, 10));
+      }
     }
   }
 
@@ -160,11 +184,18 @@ export function normalizeToGraph3D(
     (link) => nodesMap.has(link.source) && nodesMap.has(link.target)
   );
 
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Normalize] Mode: ${mode}, Total links created: ${links.length}, Filtered links: ${filteredLinks.length}, Nodes: ${nodesMap.size}`);
+  }
+
   // Apply limit by downsampling if needed
   let finalLinks = filteredLinks;
   const maxLinks = limit || 800;
 
   if (filteredLinks.length > maxLinks) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Normalize] Downsampling: ${filteredLinks.length} links > ${maxLinks} limit`);
+    }
     // Downsample: keep top-K links by weight per node
     const linksByNode = new Map<string, typeof filteredLinks>();
     for (const link of filteredLinks) {
