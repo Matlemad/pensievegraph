@@ -190,7 +190,7 @@ export function normalizeToGraph3D(
 
   // Apply limit by downsampling if needed
   let finalLinks = filteredLinks;
-  const maxLinks = limit || 800;
+  const maxLinks = limit || 3000; // Increased from 800 to 3000 for better scalability
 
   if (filteredLinks.length > maxLinks) {
     if (process.env.NODE_ENV === 'development') {

@@ -40,7 +40,7 @@ function MapPageContent() {
     return {
       mode: modeValue,
       category: searchParams.get('category') || '',
-      limit: parseInt(searchParams.get('limit') || '800', 10),
+      limit: parseInt(searchParams.get('limit') || '3000', 10),
       focusParam: searchParams.get('focus'),
     };
   }, [searchParams]);
@@ -63,7 +63,7 @@ function MapPageContent() {
 
       if (updates.limit !== undefined) {
         params.set('limit', updates.limit.toString());
-      } else if (limit !== 800) {
+          } else if (limit !== 3000) {
         params.set('limit', limit.toString());
       }
 

@@ -96,7 +96,7 @@ Returns the normalized graph in `Graph3D` format.
 * `mode`: `affiliations` | `funding` (default: `affiliations`)
 * `lens`: Comma-separated tags (e.g., `public-goods,education`)
 * `minCP`: Minimum CP filter (default: 0)
-* `limit`: Maximum number of links (default: 800)
+* `limit`: Maximum number of links (default: 3000)
 
 **Example:**
 
