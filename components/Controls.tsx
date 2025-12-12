@@ -38,12 +38,12 @@ export default function Controls({
     
     const query = searchQuery.toLowerCase();
     return graph.nodes
-      .filter((node) => {
-        return (
+        .filter((node) => {
+          return (
           node.label.toLowerCase().includes(query) ||
           node.id.toLowerCase().includes(query)
-        );
-      })
+          );
+        })
       .slice(0, 10); // Limit to 10 suggestions
   }, [graph?.nodes, searchQuery]);
 

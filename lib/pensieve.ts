@@ -32,9 +32,10 @@ async function fetchAllProjectRelations(
   console.log('[Pensieve API] Starting fetchAllProjectRelations with limit=', limit);
 
   while (hasMore) {
+    // Use includeSnapshot=false to get max limit of 300 (vs 50 with snapshots)
     const url = isFullEndpoint 
-      ? `${baseUrl}?limit=${limit}&offset=${offset}`
-      : `${baseUrl}/api/project-relations?limit=${limit}&offset=${offset}`;
+      ? `${baseUrl}?limit=${limit}&offset=${offset}&includeSnapshot=false`
+      : `${baseUrl}/api/project-relations?limit=${limit}&offset=${offset}&includeSnapshot=false`;
     
     requestCount++;
     

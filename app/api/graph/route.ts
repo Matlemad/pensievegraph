@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     // Read mode as string first to handle legacy values
     const modeParam = searchParams.get('mode') || 'stack_integration';
-    
+
     // Map old mode values to new ones for backward compatibility
     let mode: GraphMode;
     if (modeParam === 'affiliations') {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     // Normalize to Graph3D (tag parameter removed - will be added when API supports it)
     const graph = normalizeToGraph3D(pensieveData, mode, undefined, category, limit);
-    
+
     // Add build timestamp to force client refresh
     graph.meta.generated_at = new Date().toISOString();
 

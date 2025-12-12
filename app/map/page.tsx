@@ -27,20 +27,20 @@ function MapPageContent() {
 
   // Memoized URL params parsing - map old values for backward compatibility
   const { mode, category, limit, focusParam } = useMemo(() => {
-    const modeParam = searchParams.get('mode') || 'stack_integration';
+  const modeParam = searchParams.get('mode') || 'stack_integration';
     let modeValue: GraphMode;
-    if (modeParam === 'affiliations') {
+  if (modeParam === 'affiliations') {
       modeValue = 'affiliation';
-    } else if (modeParam === 'funding') {
+  } else if (modeParam === 'funding') {
       modeValue = 'funding_received';
-    } else {
+  } else {
       modeValue = modeParam as GraphMode;
-    }
+  }
     
     return {
       mode: modeValue,
       category: searchParams.get('category') || '',
-      limit: parseInt(searchParams.get('limit') || '3000', 10),
+      limit: parseInt(searchParams.get('limit') || '999999', 10), // Effectively no limit
       focusParam: searchParams.get('focus'),
     };
   }, [searchParams]);
@@ -63,7 +63,7 @@ function MapPageContent() {
 
       if (updates.limit !== undefined) {
         params.set('limit', updates.limit.toString());
-          } else if (limit !== 3000) {
+          } else if (limit !== 999999) {
         params.set('limit', limit.toString());
       }
 
@@ -271,13 +271,13 @@ function MapPageContent() {
       <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
         <div className="flex-1 relative">
           {graph?.nodes?.length > 0 ? (
-            <Graph3DComponent
-              data={graph}
-              onNodeClick={handleNodeClick}
+              <Graph3DComponent
+                data={graph}
+                onNodeClick={handleNodeClick}
               onNodeDoubleClick={handleNodeDoubleClick}
-              selectedNodeId={selectedNode?.id}
-              focusedNodeId={focusedNodeId}
-            />
+                selectedNodeId={selectedNode?.id}
+                focusedNodeId={focusedNodeId}
+              />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white">
               No data available in the graph

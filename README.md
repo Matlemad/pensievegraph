@@ -96,7 +96,7 @@ Returns the normalized graph in `Graph3D` format.
 * `mode`: `affiliations` | `funding` (default: `affiliations`)
 * `lens`: Comma-separated tags (e.g., `public-goods,education`)
 * `minCP`: Minimum CP filter (default: 0)
-* `limit`: Maximum number of links (default: 3000)
+* `limit`: Maximum number of links (default: no limit - displays all relationships)
 
 **Example:**
 
@@ -150,8 +150,9 @@ When a node is selected, the sidebar shows:
 ## **Performance**
 
 * **Cooldown**: 100 ticks to stabilize the graph
-* **Downsampling**: If links exceed the limit, keeps top-K per node
-* **Cache**: In-memory cache with configurable TTL
+* **No Link Limits**: Displays all project relationships without downsampling
+* **Cache**: In-memory cache with configurable TTL (default: 300 seconds)
+* **API Optimization**: Uses `includeSnapshot=false` for max 300 projects per page
 
 ## **Production Build**
 

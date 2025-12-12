@@ -39,14 +39,14 @@ export default function Graph3DComponent({
   selectedNodeId,
   focusedNodeId,
 }: Graph3DProps) {
-  const fgRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastClickRef = useRef<{ nodeId: string; timestamp: number } | null>(null);
+    const fgRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const lastClickRef = useRef<{ nodeId: string; timestamp: number } | null>(null);
 
-  // Callback ref to ensure we capture the instance when it's mounted
+    // Callback ref to ensure we capture the instance when it's mounted
   const setFgRef = useCallback((instance: any) => {
-    if (instance) {
-      fgRef.current = instance;
+      if (instance) {
+        fgRef.current = instance;
     }
   }, []);
 
@@ -274,25 +274,25 @@ export default function Graph3DComponent({
             
             if (currentNode && (currentNode.x !== undefined || currentNode.y !== undefined)) {
               const distRatio = 1 + GRAPH_CONFIG.zoomDistance / Math.hypot(
-                currentNode.x || 0,
-                currentNode.y || 0,
+                currentNode.x || 0, 
+                currentNode.y || 0, 
                 currentNode.z || 0
               );
-              
+
               if (fgRef.current.cameraPosition) {
-                fgRef.current.cameraPosition(
-                  {
-                    x: (currentNode.x || 0) * distRatio,
-                    y: (currentNode.y || 0) * distRatio,
-                    z: (currentNode.z || 0) * distRatio,
-                  },
-                  {
-                    x: currentNode.x || 0,
-                    y: currentNode.y || 0,
-                    z: currentNode.z || 0
-                  },
+              fgRef.current.cameraPosition(
+                {
+                  x: (currentNode.x || 0) * distRatio,
+                  y: (currentNode.y || 0) * distRatio,
+                  z: (currentNode.z || 0) * distRatio,
+                },
+                { 
+                  x: currentNode.x || 0, 
+                  y: currentNode.y || 0, 
+                  z: currentNode.z || 0 
+                },
                   GRAPH_CONFIG.zoomDuration
-                );
+              );
               }
             } else {
               setTimeout(() => checkPosition(attempts + 1), 100);

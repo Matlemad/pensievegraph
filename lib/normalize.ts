@@ -134,7 +134,7 @@ export function normalizeToGraph3D(
     let grantsProcessed = 0;
     let grantsSkipped = 0;
     const missingNodes = new Set<string>();
-    
+
     for (const grant of data.grants || []) {
       // All grant IDs should be project IDs (no org: prefix needed)
       const sourceId = prefixId('project', grant.from_id);
@@ -188,42 +188,12 @@ export function normalizeToGraph3D(
     console.log(`[Normalize] Mode: ${mode}, Total links created: ${links.length}, Filtered links: ${filteredLinks.length}, Nodes: ${nodesMap.size}`);
   }
 
-  // Apply limit by downsampling if needed
-  let finalLinks = filteredLinks;
-  const maxLinks = limit || 3000; // Increased from 800 to 3000 for better scalability
-
-  if (filteredLinks.length > maxLinks) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Normalize] Downsampling: ${filteredLinks.length} links > ${maxLinks} limit`);
-    }
-    // Downsample: keep top-K links by weight per node
-    const linksByNode = new Map<string, typeof filteredLinks>();
-    for (const link of filteredLinks) {
-      if (!linksByNode.has(link.source)) {
-        linksByNode.set(link.source, []);
-      }
-      if (!linksByNode.has(link.target)) {
-        linksByNode.set(link.target, []);
-      }
-      linksByNode.get(link.source)!.push(link);
-      linksByNode.get(link.target)!.push(link);
-    }
-
-    const topLinks = new Set<string>();
-    const kPerNode = Math.ceil(maxLinks / nodesMap.size);
-
-    for (const [nodeId, nodeLinks] of linksByNode.entries()) {
-      const sorted = nodeLinks
-        .sort((a, b) => (b.weight || 0) - (a.weight || 0))
-        .slice(0, kPerNode);
-      for (const link of sorted) {
-        topLinks.add(`${link.source}-${link.target}-${link.type}`);
-      }
-    }
-
-    finalLinks = filteredLinks.filter((link) =>
-      topLinks.has(`${link.source}-${link.target}-${link.type}`)
-    );
+  // No limit - display all links for complete graph visualization
+  // Downsampling removed to show all project relationships
+  const finalLinks = filteredLinks;
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Normalize] Final graph: ${nodesMap.size} nodes, ${finalLinks.length} links (no limit applied)`);
   }
 
   return {
