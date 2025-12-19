@@ -5,8 +5,10 @@
 export const GRAPH_CONFIG = {
   cooldownTicks: 100,
   backgroundColor: '#0a0a0a',
-  zoomDistance: 150,
+  zoomDistance: 60, // Reduced from 150 to 60 for closer zoom (closer = more "in primo piano")
   zoomDuration: 1500,
+  zoomMaxAttempts: 40, // Increased from 20 to 40 for better node position detection
+  zoomInitialDelay: 800, // Increased from 300ms to 800ms to let graph stabilize
   nodeSizeRange: { min: 1, max: 12 },
   nodeSizeDivisor: 300,
   linkWidthMultiplier: 2,

@@ -250,7 +250,7 @@ export default function Graph3DComponent({
     handleEngineStop,
   ]);
 
-  // Auto-zoom to focused node when searching
+  // Auto-zoom to focused node when searching - improved for better "first-person" view
   useEffect(() => {
     if (!fgRef.current || !focusedNodeId) return;
 
@@ -263,8 +263,9 @@ export default function Graph3DComponent({
         
         if (node) {
           const checkPosition = (attempts = 0) => {
-            if (attempts > 20) {
-              fgRef.current.zoomToFit(400, 0, (n: any) => n.id === focusedNodeId);
+            if (attempts > GRAPH_CONFIG.zoomMaxAttempts) {
+              // Fallback: zoom to fit filtered to focused node
+              fgRef.current.zoomToFit(400, 20, (n: any) => n.id === focusedNodeId);
               return;
             }
             
@@ -273,48 +274,52 @@ export default function Graph3DComponent({
             );
             
             if (currentNode && (currentNode.x !== undefined || currentNode.y !== undefined)) {
-              const distRatio = 1 + GRAPH_CONFIG.zoomDistance / Math.hypot(
-                currentNode.x || 0, 
-                currentNode.y || 0, 
+              // Calculate distance for closer zoom
+              const nodeDistance = Math.hypot(
+                currentNode.x || 0,
+                currentNode.y || 0,
                 currentNode.z || 0
               );
-
+              
+              // Use shorter distance for "in primo piano" effect
+              const distRatio = nodeDistance > 0 
+                ? 1 + GRAPH_CONFIG.zoomDistance / nodeDistance
+                : 2;
+              
               if (fgRef.current.cameraPosition) {
-              fgRef.current.cameraPosition(
-                {
-                  x: (currentNode.x || 0) * distRatio,
-                  y: (currentNode.y || 0) * distRatio,
-                  z: (currentNode.z || 0) * distRatio,
-                },
-                { 
-                  x: currentNode.x || 0, 
-                  y: currentNode.y || 0, 
-                  z: currentNode.z || 0 
-                },
+                fgRef.current.cameraPosition(
+                  {
+                    x: (currentNode.x || 0) * distRatio,
+                    y: (currentNode.y || 0) * distRatio,
+                    z: (currentNode.z || 0) * distRatio,
+                  },
+                  currentNode, // Look at the node directly
                   GRAPH_CONFIG.zoomDuration
-              );
+                );
               }
             } else {
+              // Position not ready, retry
               setTimeout(() => checkPosition(attempts + 1), 100);
             }
           };
           
           checkPosition();
         } else {
-          fgRef.current.zoomToFit(400, 0, (n: any) => n.id === focusedNodeId);
+          // Node not found, fallback
+          fgRef.current.zoomToFit(400, 20, (n: any) => n.id === focusedNodeId);
         }
       } catch (error) {
         console.warn('[Graph3D] Error zooming to node:', error);
         try {
-          fgRef.current.zoomToFit(400, 0, (n: any) => n.id === focusedNodeId);
+          fgRef.current.zoomToFit(400, 20, (n: any) => n.id === focusedNodeId);
         } catch (e2) {
           console.warn('[Graph3D] Fallback zoom also failed:', e2);
         }
       }
     };
 
-    zoomToNode();
-    const timeout = setTimeout(zoomToNode, 300);
+    // Wait longer for graph to stabilize before zooming
+    const timeout = setTimeout(zoomToNode, GRAPH_CONFIG.zoomInitialDelay);
     
     return () => clearTimeout(timeout);
   }, [focusedNodeId]);
