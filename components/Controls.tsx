@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
 import { GraphMode, AVAILABLE_CATEGORIES, Graph3D } from '@/lib/types';
 
 interface ControlsProps {
@@ -150,10 +151,14 @@ export default function Controls({
       <div className="flex flex-wrap items-center gap-4">
         {/* Logo */}
         <div className="flex items-center mr-4">
-          <img 
+          <Image 
             src="/PensieveGraphLogo.webp" 
             alt="Pensieve Graph" 
+            width={120}
+            height={32}
+            priority
             className="h-8 w-auto"
+            style={{ width: 'auto', height: '32px' }}
           />
         </div>
         {/* Mode Dropdown */}

@@ -241,63 +241,98 @@ async function fetchPensieveAPI(): Promise<PensieveData> {
   }
   
   // Build a map of project IDs for quick lookup (including referenced ones)
-  const projectIdMap = new Map<string | number, string>();
-  const projectNameMap = new Map<string | number, string>();
+  // Use normalized string IDs as keys for consistent lookup
+  const projectIdMap = new Map<string, string>();
+  const projectNameMap = new Map<string, string>();
+  
+  // Helper function to normalize ID for consistent lookup
+  const normalizeId = (id: string | number): string => String(id);
+  
+  // Helper function to check if ID exists (check both string and number variants)
+  const hasId = (id: string | number): boolean => {
+    const normalized = normalizeId(id);
+    return projectIdMap.has(normalized);
+  };
   
   // Add all projects from dataset
   for (const project of allProjects) {
-    projectIdMap.set(project.id, String(project.id));
-    projectNameMap.set(project.id, project.name);
+    const normalizedId = normalizeId(project.id);
+    projectIdMap.set(normalizedId, normalizedId);
+    projectNameMap.set(normalizedId, project.name);
   }
   
   // Task 8: Create placeholder entries for referenced projects not in dataset
-  for (const refId of referencedProjectIds) {
-    if (!projectIdMap.has(refId)) {
-      // Try to find name from relations
-      let refName = `Project ${refId}`;
-      
-      // Search for name in all relations
-      for (const project of allProjects) {
-        const searchInRelations = (items: any[]) => {
-          for (const item of items || []) {
-            const itemId = item.project || item.project_id;
-            if (String(itemId) === String(refId)) {
-              return item.project_name || item.name;
-            }
+  // First pass: collect names from all projects to build a comprehensive name map
+  // This ensures we find names even if a project is only referenced as a giver in grants
+  const referencedProjectNames = new Map<string, string>();
+  
+  // Search for names in all relations and grants of all projects
+  for (const project of allProjects) {
+    // Search in relations (affiliation, stack_and_integrations, contributing_teams)
+    const searchInRelations = (items: any[]) => {
+      for (const item of items || []) {
+        const itemId = item.project || item.project_id;
+        if (itemId) {
+          const normalizedItemId = normalizeId(itemId);
+          const name = item.project_name || item.name;
+          if (name && !referencedProjectNames.has(normalizedItemId)) {
+            referencedProjectNames.set(normalizedItemId, name);
           }
-          return null;
-        };
-        
-        const name = searchInRelations(project.affiliation || []) ||
-                    searchInRelations(project.stack_and_integrations || []) ||
-                    searchInRelations(project.contributing_teams || []);
-        
-        if (name) {
-          refName = name;
-          break;
         }
+      }
+    };
+    
+    searchInRelations(project.affiliation || []);
+    searchInRelations(project.stack_and_integrations || []);
+    searchInRelations(project.contributing_teams || []);
+    
+    // Search in grants (organization and projectDonator)
+    for (const grant of project.funding_received_grants || []) {
+      // Check organization array
+      if (grant.organization) {
+        const orgIds = Array.isArray(grant.organization) 
+          ? grant.organization 
+          : [grant.organization];
         
-        // Check grants
-        for (const grant of project.funding_received_grants || []) {
-          if (grant.organization_name && Array.isArray(grant.organization)) {
-            const idx = grant.organization.findIndex(id => String(id) === String(refId));
-            if (idx >= 0 && grant.organization_name[idx]) {
-              refName = grant.organization_name[idx];
-              break;
-            }
-          }
-          if (grant.projectDonator_name && Array.isArray(grant.projectDonator)) {
-            const idx = grant.projectDonator.findIndex(id => String(id) === String(refId));
-            if (idx >= 0 && grant.projectDonator_name[idx]) {
-              refName = grant.projectDonator_name[idx];
-              break;
+        if (grant.organization_name && Array.isArray(grant.organization_name)) {
+          for (let idx = 0; idx < orgIds.length && idx < grant.organization_name.length; idx++) {
+            const normalizedOrgId = normalizeId(orgIds[idx]);
+            const orgName = grant.organization_name[idx];
+            if (orgName && !referencedProjectNames.has(normalizedOrgId)) {
+              referencedProjectNames.set(normalizedOrgId, orgName);
             }
           }
         }
       }
       
-      projectIdMap.set(refId, String(refId));
-      projectNameMap.set(refId, refName);
+      // Check projectDonator array
+      if (grant.projectDonator) {
+        const donatorIds = Array.isArray(grant.projectDonator)
+          ? grant.projectDonator
+          : [grant.projectDonator];
+        
+        if (grant.projectDonator_name && Array.isArray(grant.projectDonator_name)) {
+          for (let idx = 0; idx < donatorIds.length && idx < grant.projectDonator_name.length; idx++) {
+            const normalizedDonatorId = normalizeId(donatorIds[idx]);
+            const donatorName = grant.projectDonator_name[idx];
+            if (donatorName && !referencedProjectNames.has(normalizedDonatorId)) {
+              referencedProjectNames.set(normalizedDonatorId, donatorName);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Second pass: create placeholder entries for referenced projects not in dataset
+  for (const refId of referencedProjectIds) {
+    const normalizedRefId = normalizeId(refId);
+    if (!projectIdMap.has(normalizedRefId)) {
+      // Try to find name from the collected name map
+      const refName = referencedProjectNames.get(normalizedRefId) || `Project ${refId}`;
+      
+      projectIdMap.set(normalizedRefId, normalizedRefId);
+      projectNameMap.set(normalizedRefId, refName);
       missingProjects.push({ id: refId, name: refName });
     }
   }
@@ -354,7 +389,7 @@ async function fetchPensieveAPI(): Promise<PensieveData> {
         if (targetIdRaw) {
           const targetId = String(targetIdRaw);
           // Only create link if target project exists in our dataset
-          if (projectIdMap.has(Number(targetId)) || projectIdMap.has(targetId)) {
+          if (hasId(targetId)) {
             // Determine type based on context
             const itemType = (item.type || '').toLowerCase();
             let linkType: 'built_on' | 'library' = 'built_on';
@@ -380,7 +415,7 @@ async function fetchPensieveAPI(): Promise<PensieveData> {
         const targetIdRaw = item.project || item.project_id || item.id || item.target_project_id;
         if (targetIdRaw) {
           const targetId = String(targetIdRaw);
-          if (projectIdMap.has(Number(targetId)) || projectIdMap.has(targetId)) {
+          if (hasId(targetId)) {
             affiliations.push({
               from_project_id: projectId,
               to_project_id: targetId,
@@ -398,7 +433,7 @@ async function fetchPensieveAPI(): Promise<PensieveData> {
         const targetIdRaw = item.project || item.project_id || item.id || item.target_project_id;
         if (targetIdRaw) {
           const targetId = String(targetIdRaw);
-          if (projectIdMap.has(Number(targetId)) || projectIdMap.has(targetId)) {
+          if (hasId(targetId)) {
             affiliations.push({
               from_project_id: projectId,
               to_project_id: targetId,
@@ -457,67 +492,58 @@ async function fetchPensieveAPI(): Promise<PensieveData> {
           }
         }
         
-        // Determine giver: prefer projectDonator if it exists and is different from organization
-        // Otherwise use organization
-        let giverId: string | null = null;
-        let giverName: string | null = null;
+        // Use ONLY projectDonator for grants (ignore organization completely)
+        // Process ALL projectDonator IDs (if multiple)
+        const receiverId = projectId;
         
-        if (projectDonatorIds.length > 0 && projectDonatorIds[0] !== String(projectId)) {
-          // projectDonator is different from current project, use it as giver
-          giverId = projectDonatorIds[0];
-          giverName = grant.projectDonator_name?.[0] || giverId;
-        } else if (organizationIds.length > 0) {
-          // Use organization as giver
-          giverId = organizationIds[0];
-          giverName = grant.organization_name?.[0] || giverId;
-        }
-        
-        if (giverId) {
-          // Current project is always the receiver (since it's in funding_received_grants)
-          const receiverId = projectId;
-          
-          // Check if receiver exists in dataset (giver might not be in dataset, that's OK - we'll create org node)
-          const receiverExists = projectIdMap.has(Number(receiverId)) || projectIdMap.has(receiverId);
-          const giverExists = projectIdMap.has(Number(giverId)) || projectIdMap.has(giverId);
-          
-          // All givers should be projects (including referenced projects added above)
-          // Skip grants where giver or receiver doesn't exist in the full dataset
-          if (giverExists && receiverExists) {
-            const amount = grant.amount 
-              ? (typeof grant.amount === 'string' ? parseFloat(grant.amount) : grant.amount)
-              : undefined;
+        if (projectDonatorIds.length > 0) {
+          for (let i = 0; i < projectDonatorIds.length; i++) {
+            const giverId = projectDonatorIds[i];
+            
+            // Skip self-grants
+            if (giverId === receiverId) {
+              continue;
+            }
+            
+            const giverName = grant.projectDonator_name?.[i] || giverId;
+            const receiverExists = hasId(receiverId);
+            const giverExists = hasId(giverId);
+            
+            if (giverExists && receiverExists) {
+              const amount = grant.amount 
+                ? (typeof grant.amount === 'string' ? parseFloat(grant.amount) : grant.amount)
+                : undefined;
 
-            const grantData: PensieveGrant = {
-              from_id: giverId,
-              to_id: receiverId,
-              direction: 'received',
-              amount,
-              date: grant.date,
-            };
-            
-            // Include names for debugging purposes only
-            if (giverName) {
-              grantData.from_name = giverName;
+              const grantData: PensieveGrant = {
+                from_id: giverId,
+                to_id: receiverId,
+                direction: 'received',
+                amount,
+                date: grant.date,
+              };
+              
+              if (giverName) {
+                grantData.from_name = giverName;
+              }
+              grantData.to_name = project.name;
+              
+              grants.push(grantData);
+              grantsMapped++;
+              
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`[Pensieve API] Grant mapped: ${giverName} (${giverId}) -> ${project.name} (${receiverId}), amount: ${amount}`);
+              }
+            } else {
+              if (grantsSkipped < 10) {
+                console.log(`[Pensieve API] Grant skipped: ${project.name} (${projectId}) - giver ${giverName} (${giverId}) exists: ${giverExists}, receiver exists: ${receiverExists}`);
+              }
+              grantsSkipped++;
             }
-            grantData.to_name = project.name;
-            
-            grants.push(grantData);
-            grantsMapped++;
-            
-            if (process.env.NODE_ENV === 'development') {
-              const isSelfGrant = giverId === receiverId;
-              console.log(`[Pensieve API] Grant mapped: ${giverName} (${giverId}) -> ${project.name} (${receiverId})${isSelfGrant ? ' [SELF-GRANT]' : ''}, amount: ${amount}`);
-            }
-          } else {
-            if (grantsSkipped < 10) {
-              console.log(`[Pensieve API] Grant skipped: ${project.name} (${projectId}) - giver ${giverName} (${giverId}) exists: ${giverExists}, receiver exists: ${receiverExists}`);
-            }
-            grantsSkipped++;
           }
         } else {
-          // Log grants with invalid organization format
+          // No projectDonator - skip this grant
           if (grantsSkipped < 10) {
-            console.log(`[Pensieve API] Grant skipped: ${project.name} (${projectId}) - invalid organization format:`, grant.organization);
+            console.log(`[Pensieve API] Grant skipped: ${project.name} (${projectId}) - no projectDonator found`);
           }
           grantsSkipped++;
         }

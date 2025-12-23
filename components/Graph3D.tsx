@@ -60,21 +60,28 @@ export default function Graph3DComponent({
     }
   }, []);
 
-  // Memoized node value function
+  // Memoized node value function with size boost for focused nodes
   const nodeVal = useCallback((n: any) => {
     try {
       const node = n as Graph3D['nodes'][0];
       const cp = node.cp || 0;
-      return Math.max(
+      const baseSize = Math.max(
         GRAPH_CONFIG.nodeSizeRange.min,
         Math.min(GRAPH_CONFIG.nodeSizeRange.max, cp / GRAPH_CONFIG.nodeSizeDivisor)
       );
+      
+      // Make focused node larger for better visibility (2x size)
+      if (node.id === focusedNodeId) {
+        return baseSize * 2;
+      }
+      
+      return baseSize;
     } catch {
       return 1;
     }
-  }, []);
+  }, [focusedNodeId]);
 
-  // Memoized node color function
+  // Memoized node color function with enhanced "spotlight" effect for searched nodes
   const nodeColor = useCallback((n: any) => {
     if (!n) return '#60a5fa';
     try {
@@ -82,9 +89,10 @@ export default function Graph3DComponent({
       if (!node?.id) return '#60a5fa';
       
       if (node.id === focusedNodeId) {
+        // More intense pulsing animation for searched/focused nodes
         const currentTime = Date.now() / 1000;
-        const pulse = (Math.sin(currentTime * 6) + 1) / 2;
-        const intensity = 0.7 + pulse * 0.3;
+        const pulse = (Math.sin(currentTime * 8) + 1) / 2; // Faster pulse (8x instead of 6x)
+        const intensity = 0.8 + pulse * 0.2; // Higher base intensity (0.8-1.0 instead of 0.7-1.0)
         return getFocusedNodeColor(pulse, intensity);
       }
       
@@ -274,28 +282,38 @@ export default function Graph3DComponent({
             );
             
             if (currentNode && (currentNode.x !== undefined || currentNode.y !== undefined)) {
-              // Calculate distance for closer zoom
-              const nodeDistance = Math.hypot(
-                currentNode.x || 0,
-                currentNode.y || 0,
-                currentNode.z || 0
-              );
+              // Position camera at fixed distance from node for "first-person" zoom
+              const nodePos = {
+                  x: currentNode.x || 0, 
+                  y: currentNode.y || 0, 
+                z: currentNode.z || 0,
+              };
               
-              // Use shorter distance for "in primo piano" effect
-              const distRatio = nodeDistance > 0 
-                ? 1 + GRAPH_CONFIG.zoomDistance / nodeDistance
-                : 2;
+              // Calculate direction vector from origin to node
+              const nodeDistance = Math.hypot(nodePos.x, nodePos.y, nodePos.z);
               
-              if (fgRef.current.cameraPosition) {
-                fgRef.current.cameraPosition(
-                  {
-                    x: (currentNode.x || 0) * distRatio,
-                    y: (currentNode.y || 0) * distRatio,
-                    z: (currentNode.z || 0) * distRatio,
-                  },
-                  currentNode, // Look at the node directly
-                  GRAPH_CONFIG.zoomDuration
-                );
+              if (nodeDistance > 0) {
+                // Normalize direction and place camera at fixed distance from node
+                const direction = {
+                  x: nodePos.x / nodeDistance,
+                  y: nodePos.y / nodeDistance,
+                  z: nodePos.z / nodeDistance,
+                };
+                
+                // Camera position: node position + offset in direction
+                const cameraPos = {
+                  x: nodePos.x + direction.x * GRAPH_CONFIG.zoomDistance,
+                  y: nodePos.y + direction.y * GRAPH_CONFIG.zoomDistance,
+                  z: nodePos.z + direction.z * GRAPH_CONFIG.zoomDistance,
+                };
+                
+                if (fgRef.current.cameraPosition) {
+                  fgRef.current.cameraPosition(
+                    cameraPos,
+                    nodePos, // Look at the node directly
+                    GRAPH_CONFIG.zoomDuration
+                  );
+                }
               }
             } else {
               // Position not ready, retry

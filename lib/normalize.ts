@@ -186,7 +186,7 @@ export function normalizeToGraph3D(
 
   if (process.env.NODE_ENV === 'development') {
     console.log(`[Normalize] Mode: ${mode}, Total links created: ${links.length}, Filtered links: ${filteredLinks.length}, Nodes: ${nodesMap.size}`);
-  }
+      }
 
   // No limit - display all links for complete graph visualization
   // Downsampling removed to show all project relationships
