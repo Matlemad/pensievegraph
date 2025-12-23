@@ -7,12 +7,17 @@ Le modifiche funzionano in locale ma non su Vercel a causa della cache.
 
 ### 1. Cache Headers nelle API Routes
 Aggiunti header espliciti per disabilitare la cache:
-- `Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0`
+- `Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0`
+- `CDN-Cache-Control: no-store`
+- `Vercel-CDN-Cache-Control: no-store`
 - `Pragma: no-cache`
 - `Expires: 0`
+- `X-Timestamp: [timestamp]` (header aggiuntivo per forzare refresh)
 
 ### 2. Force Dynamic Rendering
-Tutte le API routes hanno `export const dynamic = 'force-dynamic'` per prevenire il rendering statico.
+Tutte le API routes hanno:
+- `export const dynamic = 'force-dynamic'` per prevenire il rendering statico
+- `export const revalidate = 0` per disabilitare ISR caching
 
 ## Come Forzare il Refresh su Vercel
 

@@ -5,6 +5,7 @@ import { GraphMode } from '@/lib/types';
 
 // Force dynamic rendering since we use searchParams
 export const dynamic = 'force-dynamic';
+export const revalidate = 0; // Disable ISR caching
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,13 +47,16 @@ export async function GET(request: NextRequest) {
     // Add build timestamp to force client refresh
     graph.meta.generated_at = new Date().toISOString();
 
-    // Disable caching to ensure fresh data on Vercel
+    // Disable all caching to ensure fresh data on Vercel
     return NextResponse.json(graph, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+        'CDN-Cache-Control': 'no-store',
+        'Vercel-CDN-Cache-Control': 'no-store',
         'Pragma': 'no-cache',
         'Expires': '0',
         'X-Content-Type-Options': 'nosniff',
+        'X-Timestamp': Date.now().toString(), // Additional timestamp header
       },
     });
   } catch (error) {
